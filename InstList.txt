@@ -1,0 +1,43 @@
+1st bit - 32 vs 64 bit instruction
+Condition codes - 3 bit
+	AL NE LT EQ GT LE GE
+	0  1  2  3  4  5  6
+8 bit instruction identifier - Registers are 4 bit
+	MOV - (4)(8)(4)(16)
+		Rres, R/#
+	ADD - (4)(8)(4)(4)(12)
+		Rres, Rsrc, R/#
+	SUB
+	MUL
+	DIV
+	AND
+	ORR
+	XOR
+	ASR
+	LSL
+	LSR
+	IFD - Int From Double
+		R
+	DFI - Double From Int
+	DMOV - (Really moves float)
+		Rres, R/#
+	DADD - Double instructions - Uses raw register bytes
+	DSUB
+	DMUL
+	DDIV
+	RTR - Register To Ram
+		Rs/r, Raddr, #offset(12b)
+	RFR - Register From Ram
+	BTR - Byte To Ram
+	BFR - Byte From Ram
+	HBTR - High Bytes To Ram (top 32 bits)
+	LBTR - Low Bytes To Ram (bottom 32 bits)
+	HBFR - Half Bytes From Ram (32 bits > register)
+	HLT
+	B
+		R/# (jump offset)
+	BL
+	BX
+		Roff, #(procmode)
+	CPM
+		#(procmode)

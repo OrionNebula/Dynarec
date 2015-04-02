@@ -1,0 +1,23 @@
+[Byte status] -> (0000 error code)(00 render mode -> text vs gl)(0 ready for cpu)(0 ready for card)
+[Integer width]
+[Integer height]
+[Integer instAddr] -> points to absolute address for gpu instruction struct
+
+Struct -> gpu instruction
+[Integer length]
+[Byte[] code]
+
+Code def
+[Integer color]
+[Byte char]
+[Short x]
+[Short y]
+
+--------------------
+Interrupt Controller
+--------------------
+
+[Byte status] -> (0000 -> error code)(0000 -> has record to process)
+[Byte command] -> (0 = add, 1 = remove)(0000000 -> interrupt id)
+[Integer toMonitor] -> address to watch for changes in
+[Byte regionLength] -> length of region to watch (in bytes, 1-8)
