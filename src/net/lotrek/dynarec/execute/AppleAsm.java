@@ -278,6 +278,10 @@ public class AppleAsm implements Assembler {
 				head |= Integer.parseInt(line[4].replace("#", "")) & 0x7ff;
 			dos.writeShort(head);
 		}),
+		RET(28, (line, head, dos, is64)->{
+			dos.writeShort(head);
+			dos.writeShort(0);
+		}),
 		;
 		
 		private InstructionAssembler asm;

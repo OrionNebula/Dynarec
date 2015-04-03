@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -81,10 +82,10 @@ public class AppleCasm implements Assembler
 					System.out.println("Defined " + elements[0]);
 					break;
 				case "ifdef":
-					shouldAssemble = !constPool.containsKey(data);
+					shouldAssemble = constPool.containsKey(data);
 					break;
 				case "ifndef":
-					shouldAssemble = constPool.containsKey(data);
+					shouldAssemble = !constPool.containsKey(data);
 					break;
 				case "endif":
 					shouldAssemble = true;
@@ -132,12 +133,13 @@ public class AppleCasm implements Assembler
 			}
 		}
 		
+		
 		return new String[]{new String(baos.toByteArray())};
 	}
 	
 	public static String evaluateExpression(String expr)
 	{
-		boolean paren = expr.startsWith("(") && expr.endsWith(")");
+		boolean paren = expr.startsWith("(") && expr.endsWith(")") && ((expr.replaceAll("[^()]", "").length() - 2) % 2 == 0 || expr.replaceAll("[^()]", "").length() == 2);
 		expr = (paren ? expr.substring(1, expr.length() - 1) : expr).replaceAll("\\s", "");
 		
 		Pattern p = Pattern.compile("\\(([^\\)]+)\\)");
@@ -149,26 +151,27 @@ public class AppleCasm implements Assembler
 			expr = expr.replace(m.group(), evaluateExpression(g));
 		}
 		
-		System.out.println(expr);
-		if(!expr.matches(".*[^\\.\\d +\\-/*()].*")) //can be evaluated
+		if(!expr.matches(".*[^\\.\\d +\\-/*()].*") || (expr.matches(".*[^\\.\\d +\\-/*()].*") && expr.replaceAll("[^\\.+\\-*/]", "").length() != 1)) //can be evaluated
 		{
 			expr = expr.replace("\\s", "");
 			
 			ArrayList<String> pairs = new ArrayList<>();
-			Matcher exM = Pattern.compile("\\d+[+\\-*/](\\d+)").matcher(expr);
+			Matcher exM = Pattern.compile("[^+\\-*/()]+[+\\-*/]([^+\\-*/()]+)").matcher(expr);
 			if (exM.find())
 			    do
 			        pairs.add(exM.group());
 			    while (exM.find(exM.start(1)));
 			
+			pairs.sort(new OperationComparator());
+			
 			if(pairs.size() == 1)
 			{
 				String[] elem = pairs.get(0).split("[*/\\-+]");
 				
-				switch(pairs.get(0).split("\\d+")[1])
+				switch(pairs.get(0).split("[\\d\\.]+")[1])
 				{
 				case "*":
-					return "" + Double.parseDouble(elem[0]) * Double.parseDouble(elem[1]);
+					return "" + (Double.parseDouble(elem[0]) * Double.parseDouble(elem[1]));
 				case "/":
 					return "" + Double.parseDouble(elem[0]) / Double.parseDouble(elem[1]);
 				case "+":
@@ -178,10 +181,31 @@ public class AppleCasm implements Assembler
 				}
 			}
 			
-			return evaluateExpression(pairs.get(0));
+			String toEval = "";
+			for(String pair : pairs)
+				if(!pair.matches(".*[^\\.\\d +\\-/*()].*"))
+				{
+					toEval = pair;
+					break;
+				}
+			
+			if(toEval.isEmpty())
+				return expr;
+			
+			return evaluateExpression(expr.replace(toEval, evaluateExpression(toEval)));
 		}
 		
 		return paren ? "(" + expr + ")" : expr;
+		
+	}
+	
+	public static class OperationComparator implements Comparator<String>
+	{
+
+		public int compare(String o1, String o2)
+		{
+			return "*/+-".indexOf(o1.split("[^+\\-*/()]+")[1]) - "*/+-".indexOf(o2.split("[^+\\-*/()]+")[1]);
+		}
 		
 	}
 	

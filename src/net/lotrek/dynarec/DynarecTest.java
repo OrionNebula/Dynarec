@@ -28,7 +28,7 @@ public class DynarecTest
 		forceInit(InstructionWriter.class);
 		
 		try {
-			System.out.println(AppleCasm.evaluateExpression("(5*6)*(1+1)"));
+			System.out.println(AppleCasm.evaluateExpression("1024 - (7 * i)"));
 			new AppleCasm().assemble(new FileInputStream(new File("test.c")), new ByteArrayOutputStream());
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -37,7 +37,7 @@ public class DynarecTest
 		APPLEDRCx64 drc = new APPLEDRCx64(1024, new byte[0], new VideoDevice());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
-			new AppleAsm().assemble(new FileInputStream(new File("test.asm")), baos);
+			new AppleAsm().assemble(new FileInputStream(new File("CharDisp.asm")), baos);
 			byte[] b = baos.toByteArray();
 			System.arraycopy(b, 0, drc.getMemory(), 0, b.length);
 		} catch (IOException e) {

@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import net.lotrek.dynarec.ByteArrayClassLoader;
 import net.lotrek.dynarec.ClassGenerator;
@@ -22,6 +23,8 @@ public class APPLEDRCx64 extends Processor
 	private int stackSize = 5, varSize = 6;
 	private ByteArrayClassLoader bacl = new ByteArrayClassLoader();
 	private HashMap<String, Integer> volatileKeys = new HashMap<>();
+	private final Object lock = new Object();
+	private LinkedBlockingQueue<Object[]> interruptQueue = new LinkedBlockingQueue<>();
 	private final InstructionWriter[] proc = new InstructionWriter[]
 	{
 		(linst, gen) -> { //MOV
@@ -651,6 +654,39 @@ int len = 1;
 			
 			return len;
 		},
+		(linst, gen) -> { //RET
+			int len = 0;
+			
+			gen.addBytecode(Bytecode.iconst_4);
+			gen.addBytecode(Bytecode.newarray, 11);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_0);
+			loadRegisterBytecode(gen, 15);
+			loadRegisterBytecode(gen, 14);
+			gen.addBytecode(Bytecode.lsub);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_1);
+			gen.addBytecode(Bytecode.lconst_0);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_2);
+			gen.addBytecode(Bytecode.lconst_1);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_3);
+			gen.addBytecode(Bytecode.iconst_3);
+			gen.addBytecode(Bytecode.i2l);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.areturn);
+			
+			return len;
+		},
 	};
 	
 	public APPLEDRCx64(int memorySize, byte[] biosImage,
@@ -661,20 +697,35 @@ int len = 1;
 	//TODO: Finish instruction set - condition codes
 	protected void executeImpl()
 	{
-		while(!shouldTerm && !isHalted)
+		while(!shouldTerm)
 		{
 			int addr = (int) registers[15];
 			int[] sh = hashCodeSegment(getMemory(), addr, 0xabec42eb);
 			if(compiledSegments.containsKey(sh[0]))
 				try {
-					registers[15] += sh[1];
+//					registers[15] += sh[1];
 					
 					long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], registers, getMemory()));
 //					System.out.println(Arrays.toString(ret));
 					if(ret[0] == 0)
 					{
-						isHalted = true;
-						break;
+						synchronized (lock) {
+							try {
+								isHalted = true;
+								lock.wait();
+								if(shouldTerm)
+									break;
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+						
+						isHalted = false;
+						
+						Object[] inter = interruptQueue.poll();
+						Register toJump = new Register(Integer.class, (int) registers[12] + 4*(int)inter[0], this.getMemory());
+						
+						continue;
 					}
 					
 					switch((int)ret[3])
@@ -721,12 +772,26 @@ int len = 1;
 					int inst = (int) Register.getTypeForBytes(Integer.class, getMemory(), addr + i);
 					if(((inst >> 31) & 1) == 1) //64 bit
 					{
+						loadRegisterBytecode(gen, 15);
+						gen.addBytecode(Bytecode.iconst_4);
+						gen.addBytecode(Bytecode.iconst_4);
+						gen.addBytecode(Bytecode.iadd);
+						gen.addBytecode(Bytecode.i2l);
+						gen.addBytecode(Bytecode.ladd);
+						setRegisterFromStackBytecode(gen, 15);
+						
 						long linst = (long)Register.getTypeForBytes(Long.class, getMemory(), addr + i);
 						proc[(int)(linst >> 52) & 0xff].writeInstruction(linst, gen);
 						
 						i += 8;
 					}else
 					{
+						loadRegisterBytecode(gen, 15);
+						gen.addBytecode(Bytecode.iconst_4);
+						gen.addBytecode(Bytecode.i2l);
+						gen.addBytecode(Bytecode.ladd);
+						setRegisterFromStackBytecode(gen, 15);
+						
 						long linst = (long)inst & 0xffffffffl;
 						proc[(int)(inst >> 20) & 0xff].writeInstruction(linst, gen);
 
@@ -740,7 +805,7 @@ int len = 1;
 				//ClassReader.parseClass(new ByteArrayInputStream(b));
 				Class<?> clazz = bacl.loadClass("ClassGen0x" + Integer.toHexString(addr) + Integer.toHexString(sh[0]), b, 0, b.length);
 				compiledSegments.put(sh[0], new Object[]{clazz.newInstance(), clazz.getDeclaredMethods()[0]});
-				registers[15] += sh[1];
+//				registers[15] += sh[1];
 				long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], registers, getMemory()));
 //				System.out.println(Arrays.toString(ret));
 				if(ret[0] == 0)
@@ -799,7 +864,12 @@ int len = 1;
 
 	public void interrupt(int index, Number...parameters)
 	{
-		
+		try {
+			interruptQueue.put(new Object[]{index, parameters});
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		lock.notify();
 	}
 	
 	

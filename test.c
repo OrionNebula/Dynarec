@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define derp = 3
+#define derp
 
 #ifndef derp
 
@@ -14,4 +14,5 @@ int main(void)
 
 int main(void)
 {
+	int test = 0;
 }
