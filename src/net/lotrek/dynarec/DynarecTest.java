@@ -8,6 +8,7 @@ import java.io.IOException;
 import net.lotrek.dynarec.ClassGenerator.Bytecode;
 import net.lotrek.dynarec.ClassGenerator.ConstPoolEntry;
 import net.lotrek.dynarec.ClassGenerator.ConstPoolProvider;
+import net.lotrek.dynarec.devices.InterruptController;
 import net.lotrek.dynarec.devices.VideoDevice;
 import net.lotrek.dynarec.execute.APPLEDRCx64;
 import net.lotrek.dynarec.execute.AppleCasm;
@@ -27,17 +28,17 @@ public class DynarecTest
 		forceInit(APPLEDRCx64.class);
 		forceInit(InstructionWriter.class);
 		
-		try {
+		/*try {
 			System.out.println(AppleCasm.evaluateExpression("1024 - (7 * i)"));
 			new AppleCasm().assemble(new FileInputStream(new File("test.c")), new ByteArrayOutputStream());
 		} catch (IOException e1) {
 			e1.printStackTrace();
-		}
+		}*/
 		
-		APPLEDRCx64 drc = new APPLEDRCx64(1024, new byte[0], new VideoDevice());
+		APPLEDRCx64 drc = new APPLEDRCx64(1024, new byte[0], new VideoDevice(), new InterruptController());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
-			new AppleAsm().assemble(new FileInputStream(new File("CharDisp.asm")), baos);
+			new AppleAsm().assemble(new FileInputStream(new File("test.asm")), baos);
 			byte[] b = baos.toByteArray();
 			System.arraycopy(b, 0, drc.getMemory(), 0, b.length);
 		} catch (IOException e) {

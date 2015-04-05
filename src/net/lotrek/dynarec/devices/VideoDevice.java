@@ -33,43 +33,42 @@ public class VideoDevice extends MemorySpaceDevice
 
 	public void executeDeviceCycle()
 	{
-		int statusReg = (int)(byte)instanceRegisters[0].getValue();
-		renderMode = statusReg >> 2 & 0x3;
-		
-		int w = (int) instanceRegisters[1].getValue(), h = (int) instanceRegisters[2].getValue();
-		if(w != Display.getWidth() || h != Display.getHeight())
-			try {
-//				System.out.println(Display.getWidth() + " x " + Display.getHeight() + " : " + w + " x " + h);
-				Display.setDisplayMode(new DisplayMode(w, h));
-			} catch (LWJGLException e) {
-				e.printStackTrace();
-			}
-		
-		if((statusReg & 1) == 1)
-		{
-			int instAddr = (int)instanceRegisters[3].getValue();
-			if(instAddr != 0)
-			{
-				instanceRegisters[3].setValue(Integer.class, 0);
-				
-				int len = (int) Register.getTypeForBytes(Integer.class, this.getProcessor().getMemory(), instAddr);
-				for (int i = 0; i < len; i++)
-				{
-					Register[] str = pixelStructure.getInstance(instAddr + 4 + i * 9, this.getProcessor().getMemory());
-					
-					short x = (short) str[2].getValue(), y = (short) str[3].getValue();
-					screenColors[y][x] = new Color((int)str[0].getValue());
-					screenText[y][x] = (char)(byte)str[1].getValue();
-				}
-			}
-			
-			statusReg &= ~3;
-			statusReg |= 2;
-			instanceRegisters[0].setValue(Byte.class, (byte)statusReg);
-		}
-		
 		if(Display.isCreated())
 		{
+			int statusReg = (int)(byte)instanceRegisters[0].getValue();
+			renderMode = statusReg >> 2 & 0x3;
+			
+			int w = (int) instanceRegisters[1].getValue(), h = (int) instanceRegisters[2].getValue();
+			if(w != Display.getWidth() || h != Display.getHeight())
+				try {
+//					System.out.println(Display.getWidth() + " x " + Display.getHeight() + " : " + w + " x " + h);
+					Display.setDisplayMode(new DisplayMode(w, h));
+				} catch (LWJGLException e) {
+					e.printStackTrace();
+				}
+			
+			if((statusReg & 1) == 1)
+			{
+				int instAddr = (int)instanceRegisters[3].getValue();
+				if(instAddr != 0)
+				{
+					instanceRegisters[3].setValue(Integer.class, 0);
+					
+					int len = (int) Register.getTypeForBytes(Integer.class, this.getProcessor().getMemory(), instAddr);
+					for (int i = 0; i < len; i++)
+					{
+						Register[] str = pixelStructure.getInstance(instAddr + 4 + i * 9, this.getProcessor().getMemory());
+						
+						short x = (short) str[2].getValue(), y = (short) str[3].getValue();
+						screenColors[y][x] = new Color((int)str[0].getValue());
+						screenText[y][x] = (char)(byte)str[1].getValue();
+					}
+				}
+				
+				statusReg &= ~1;
+				instanceRegisters[0].setValue(Byte.class, (byte)statusReg);
+			}
+			
 			switch(renderMode)
 			{
 			case RENDER_TEXT:

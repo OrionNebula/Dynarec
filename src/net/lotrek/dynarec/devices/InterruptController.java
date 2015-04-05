@@ -20,8 +20,15 @@ public class InterruptController extends MemorySpaceDevice
 		{
 			if(((byte)instanceRegisters[1].getValue() >> 7 & 1) == 0) //add
 			{
-				monitorList.set((byte)instanceRegisters[1].getValue() & 0x7F, new int[]{(int)instanceRegisters[2].getValue(), (byte)instanceRegisters[3].getValue()});
-				cachedValues.set((byte)instanceRegisters[1].getValue() & 0x7F, (Long) Register.getTypeForBytes((byte)instanceRegisters[3].getValue(), this.getProcessor().getMemory(), (int)instanceRegisters[2].getValue()));
+				if(monitorList.size() > ((byte)instanceRegisters[1].getValue() & 0x7F))
+					monitorList.set((byte)instanceRegisters[1].getValue() & 0x7F, new int[]{(int)instanceRegisters[2].getValue(), (byte)instanceRegisters[3].getValue()});
+				else
+					monitorList.add((byte)instanceRegisters[1].getValue() & 0x7F, new int[]{(int)instanceRegisters[2].getValue(), (byte)instanceRegisters[3].getValue()});
+				
+				if(cachedValues.size() > ((byte)instanceRegisters[1].getValue() & 0x7F))
+					cachedValues.set((byte)instanceRegisters[1].getValue() & 0x7F, (long)(byte)(Byte)Register.getTypeForBytes((byte)instanceRegisters[3].getValue(), this.getProcessor().getMemory(), (int)instanceRegisters[2].getValue()));
+				else
+					cachedValues.add((byte)instanceRegisters[1].getValue() & 0x7F, (long)(byte)(Byte)Register.getTypeForBytes((byte)instanceRegisters[3].getValue(), this.getProcessor().getMemory(), (int)instanceRegisters[2].getValue()));
 			}
 			else //remove
 				monitorList.remove((byte)instanceRegisters[1].getValue() & 0x7F);
@@ -32,9 +39,9 @@ public class InterruptController extends MemorySpaceDevice
 		int i = 0;
 		for (int[] area : monitorList)
 		{
-			if((Long) Register.getTypeForBytes(area[1], this.getProcessor().getMemory(), area[0]) != cachedValues.get(i))
+			if((long)(byte)(Byte)Register.getTypeForBytes(area[1], this.getProcessor().getMemory(), area[0]) != cachedValues.get(i))
 			{
-				cachedValues.set(i, (Long) Register.getTypeForBytes(area[1], this.getProcessor().getMemory(), area[0]));
+				cachedValues.set(i, (long)(byte)Register.getTypeForBytes(area[1], this.getProcessor().getMemory(), area[0]));
 				this.getProcessor().interrupt(0, i, area[0]);
 			}
 			

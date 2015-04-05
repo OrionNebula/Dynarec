@@ -1,4 +1,4 @@
-[Byte status] -> (0000 error code)(00 render mode -> text vs gl)(0 ready for cpu)(0 ready for card)
+[Byte status] -> (0000 error code)(00 render mode -> text vs gl)(00 busy)
 [Integer width]
 [Integer height]
 [Integer instAddr] -> points to absolute address for gpu instruction struct

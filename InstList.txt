@@ -1,3 +1,8 @@
+r15 - PC
+r14 - LR
+r13 - ProcMode
+r12 - IVT
+
 1st bit - 32 vs 64 bit instruction
 Condition codes - 3 bit
 	AL NE LT EQ GT LE GE
@@ -41,3 +46,4 @@ Condition codes - 3 bit
 		Roff, #(procmode)
 	CPM
 		#(procmode)
+	

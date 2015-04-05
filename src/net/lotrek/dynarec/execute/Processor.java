@@ -67,5 +67,5 @@ public abstract class Processor
 	
 	protected abstract void terminateImpl();
 	protected abstract void executeImpl();
-	public abstract void interrupt(int index, Number...parameters);
+	public abstract void interrupt(int index, long...parameters);
 }

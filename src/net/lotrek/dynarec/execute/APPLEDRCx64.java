@@ -18,9 +18,10 @@ public class APPLEDRCx64 extends Processor
 {
 	//Maps mem address to Object[]{Object, Method}
 	private HashMap<Integer, Object[]> compiledSegments = new HashMap<>();
-	private long[] registers = new long[16];
+	private static final int PC = 15, LR = 14, ProcMode = 13, IVT = 12;
+	private long[][] registers = new long[2][16];
 	private volatile boolean shouldTerm, isHalted;
-	private int stackSize = 5, varSize = 6;
+	private int stackSize = 10, varSize = 10;
 	private ByteArrayClassLoader bacl = new ByteArrayClassLoader();
 	private HashMap<String, Integer> volatileKeys = new HashMap<>();
 	private final Object lock = new Object();
@@ -587,8 +588,8 @@ int len = 1;
 			
 			gen.addBytecode(Bytecode.lastore);
 			
-			loadRegisterBytecode(gen, 15);
-			setRegisterFromStackBytecode(gen, 14);
+			loadRegisterBytecode(gen, PC);
+			setRegisterFromStackBytecode(gen, LR);
 			
 			gen.addBytecode(Bytecode.areturn);
 			
@@ -657,14 +658,15 @@ int len = 1;
 		(linst, gen) -> { //RET
 			int len = 0;
 			
+			gen.addBytecode(Bytecode.lconst_0);
+			setRegisterFromStackBytecode(gen, ProcMode);
+			
 			gen.addBytecode(Bytecode.iconst_4);
 			gen.addBytecode(Bytecode.newarray, 11);
 			
 			gen.addBytecode(Bytecode.dup);
 			gen.addBytecode(Bytecode.iconst_0);
-			loadRegisterBytecode(gen, 15);
-			loadRegisterBytecode(gen, 14);
-			gen.addBytecode(Bytecode.lsub);
+			gen.addBytecode(Bytecode.lconst_1);
 			gen.addBytecode(Bytecode.lastore);
 			
 			gen.addBytecode(Bytecode.dup);
@@ -699,16 +701,22 @@ int len = 1;
 	{
 		while(!shouldTerm)
 		{
-			int addr = (int) registers[15];
+			int addr = (int) getRegisters()[PC];
 			int[] sh = hashCodeSegment(getMemory(), addr, 0xabec42eb);
 			if(compiledSegments.containsKey(sh[0]))
 				try {
 //					registers[15] += sh[1];
 					
-					long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], registers, getMemory()));
+					long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], getRegisters(), getMemory()));
 //					System.out.println(Arrays.toString(ret));
 					if(ret[0] == 0)
 					{
+						System.out.println("Cached HLT");
+						
+						getRegisters()[15] -= 4;
+								
+						setProcMode(0);
+						
 						synchronized (lock) {
 							try {
 								isHalted = true;
@@ -723,7 +731,9 @@ int len = 1;
 						isHalted = false;
 						
 						Object[] inter = interruptQueue.poll();
-						Register toJump = new Register(Integer.class, (int) registers[12] + 4*(int)inter[0], this.getMemory());
+						Register toJump = new Register(Integer.class, (int) getRegisters()[IVT] + 4*(int)inter[0], this.getMemory());
+						setProcMode(1);
+						getRegisters()[PC] = (int) toJump.getValue();
 						
 						continue;
 					}
@@ -757,7 +767,19 @@ int len = 1;
 					}
 					
 //					System.out.println("Cache " + ret[0] + " : " + addr + " : " + sh[0]);
-					registers[15] += ret[0];
+					getRegisters()[PC] += ret[0];
+					
+					if(interruptQueue.size() > 0 && getRegisters()[ProcMode] == 0)
+					{
+						setProcMode(0);
+						
+						Object[] inter = interruptQueue.poll();
+						Register toJump = new Register(Integer.class, (int) getRegisters()[IVT] + 4*(int)inter[0], this.getMemory());
+						
+						setProcMode(1);
+						getRegisters()[PC] = (int) toJump.getValue();
+					}
+					
 				} catch (IllegalAccessException | IllegalArgumentException
 						| InvocationTargetException e) {
 					e.printStackTrace();
@@ -766,19 +788,19 @@ int len = 1;
 			try {
 				volatileKeys.clear();
 				ClassGenerator gen = new ClassGenerator("ClassGen0x" + Integer.toHexString(addr) + Integer.toHexString(sh[0]));
-				
+
 				for (int i = 0; i < sh[1];)
 				{
 					int inst = (int) Register.getTypeForBytes(Integer.class, getMemory(), addr + i);
 					if(((inst >> 31) & 1) == 1) //64 bit
 					{
-						loadRegisterBytecode(gen, 15);
+						loadRegisterBytecode(gen, PC);
 						gen.addBytecode(Bytecode.iconst_4);
 						gen.addBytecode(Bytecode.iconst_4);
 						gen.addBytecode(Bytecode.iadd);
 						gen.addBytecode(Bytecode.i2l);
 						gen.addBytecode(Bytecode.ladd);
-						setRegisterFromStackBytecode(gen, 15);
+						setRegisterFromStackBytecode(gen, PC);
 						
 						long linst = (long)Register.getTypeForBytes(Long.class, getMemory(), addr + i);
 						proc[(int)(linst >> 52) & 0xff].writeInstruction(linst, gen);
@@ -786,11 +808,11 @@ int len = 1;
 						i += 8;
 					}else
 					{
-						loadRegisterBytecode(gen, 15);
+						loadRegisterBytecode(gen, PC);
 						gen.addBytecode(Bytecode.iconst_4);
 						gen.addBytecode(Bytecode.i2l);
 						gen.addBytecode(Bytecode.ladd);
-						setRegisterFromStackBytecode(gen, 15);
+						setRegisterFromStackBytecode(gen, PC);
 						
 						long linst = (long)inst & 0xffffffffl;
 						proc[(int)(inst >> 20) & 0xff].writeInstruction(linst, gen);
@@ -806,12 +828,35 @@ int len = 1;
 				Class<?> clazz = bacl.loadClass("ClassGen0x" + Integer.toHexString(addr) + Integer.toHexString(sh[0]), b, 0, b.length);
 				compiledSegments.put(sh[0], new Object[]{clazz.newInstance(), clazz.getDeclaredMethods()[0]});
 //				registers[15] += sh[1];
-				long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], registers, getMemory()));
+				long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], getRegisters(), getMemory()));
 //				System.out.println(Arrays.toString(ret));
 				if(ret[0] == 0)
 				{
-					isHalted = true;
-					break;
+					getRegisters()[15] -= 4;
+					
+					setProcMode(0);
+					
+					System.out.println("New HLT");
+					
+					synchronized (lock) {
+						try {
+							isHalted = true;
+							lock.wait();
+							if(shouldTerm)
+								break;
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+					
+					isHalted = false;
+					
+					Object[] inter = interruptQueue.poll();
+					Register toJump = new Register(Integer.class, (int) getRegisters()[IVT] + 4*(int)inter[0], this.getMemory());
+					setProcMode(1);
+					getRegisters()[PC] = (int) toJump.getValue();
+					
+					continue;
 				}
 				
 				switch((int)ret[3])
@@ -843,18 +888,27 @@ int len = 1;
 				}
 				
 				System.out.println("New " + ret[0] + " : " + addr + " : " + sh[0]);
-				registers[15] += ret[0];
+				getRegisters()[15] += ret[0];
+				
+				if(interruptQueue.size() > 0 && getRegisters()[ProcMode] == 0)
+				{
+					setProcMode(0);
+					
+					Object[] inter = interruptQueue.poll();
+					Register toJump = new Register(Integer.class, (int) getRegisters()[IVT] + 4*(int)inter[0], this.getMemory());
+					
+					setProcMode(1);
+					getRegisters()[PC] = (int) toJump.getValue();
+				}
 			} catch (ClassNotFoundException | IllegalAccessException
 					| IllegalArgumentException
 					| SecurityException | InstantiationException
 					| IOException | InvocationTargetException e) {
 				e.printStackTrace();
 			}
-			
-//			System.out.println(Arrays.toString(registers));
 		}
 		
-		System.out.println(Arrays.toString(registers));
+		System.out.println(Arrays.toString(getRegisters()));
 	}
 	
 	protected void terminateImpl()
@@ -862,17 +916,28 @@ int len = 1;
 		shouldTerm = true;
 	}
 
-	public void interrupt(int index, Number...parameters)
+	public void interrupt(int index, long...parameters)
 	{
 		try {
 			interruptQueue.put(new Object[]{index, parameters});
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		lock.notify();
+		synchronized (lock) {
+			lock.notify();
+		}
 	}
 	
-	
+	private long[] getRegisters()
+	{
+		return registers[(int) (registers[0][ProcMode] = registers[1][ProcMode])];
+	}
+
+	private void setProcMode(int mode)
+	{
+		registers[1][ProcMode] = mode;
+	}
+		
 	public void setStackVarSize(int stack, int var)
 	{
 		stackSize = stack > stackSize ? stack : stackSize;
@@ -1228,9 +1293,9 @@ int len = 1;
 		{
 			int inst = (int) Register.getTypeForBytes(Integer.class, data, off + length);
 
-			if((inst >> 20 & 0xff) == 22 || (inst >> 20 & 0xff) == 23 || (inst >> 20 & 0xff) == 24) //Will stop when encountering jump
+			if((inst >> 20 & 0xff) == 22 || (inst >> 20 & 0xff) == 23 || (inst >> 20 & 0xff) == 24 || (inst >> 20 & 0xff) == 28) //Will stop when encountering jump
 			{
-				length += (inst >> 20 & 0xff) == 22 ? 4 : 8;
+				length += (inst >> 20 & 0xff) == 23 ? 8 : 4;
 				break par;
 			}
 			if(((inst >> 31) & 1) == 1) //64 bit

@@ -6,20 +6,17 @@
 ? LE = #5 ?
 ? GE = #6 ?
 
-	MOV r0, #1024
-	SUB r0, r0, #13
-	SUB r0, r0, #7
-
-	MOV r1, #1
-	BTR r1, r0, #6
-	BTR r1, r0, #0
-
-	ADD r12, r15, #:end:
-	ADD r1, r15, #:int:
-	LBTR r1, r12, #0
-
-	HLT
-	:int:
+	ADD r12, r15, #:IVT:
+	ADD r0, r15, #:exec:
+	LBTR r0, r12, #0
+:loop:
+	MOV r0, r0
+BITS64
+	B #:loop: r0, r0, AL
+BITS32
+	:IVT:
+	0x0
+	:exec:
 	MOV r0, #1024
 	SUB r0, r0, #13
 
@@ -30,7 +27,7 @@ BITS64
 	B #:hlt: r2, r3 NE
 BITS32
 
-	ADD r0, r15, #:vis:
+	ADD r0, r15, #:end:
 
 	MOV r2, #1
 	LBTR r2, r0, #0
@@ -57,5 +54,3 @@ BITS32
 	:hlt:
 	RET
 	:end:
-	0x0
-	:vis:

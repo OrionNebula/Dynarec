@@ -6,6 +6,9 @@
 ? LE = #5 ?
 ? GE = #6 ?
 
+	ADD r12, r15, #:endLbl:
+	HLT
+
 	ADD r0, r15, #:endLbl:
 
 	MOV r1, #0
@@ -41,3 +44,4 @@ BITS32
 
 	HLT
 :endLbl:
+	0x8
