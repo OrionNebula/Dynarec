@@ -41,6 +41,30 @@ BITS64
 	B #:wait: r3, r2, EQ
 BITS32
 
+	BFR r2, r1, #0
+	MOV r1, #28
+
+BITS64
+	B #:adv: r2, r1, NE
+BITS32
+
+
+	ADD r5, r5, #1
+	MOV r4, #0
+	RET
+
+	:adv:
+	MOV r1, #14
+
+BITS64
+	B #:adv2: r2, r1, NE
+BITS32
+
+	SUB r4, r4, #1
+	RET
+
+	:adv2:
+
 	ADD r0, r0, #21
 
 	BFR r2, r0, #0
@@ -63,8 +87,11 @@ BITS32
 	;MOV r2, #65
 	;BTR r2, r0, #8
 
-	ADD r4, r4, #1
+	LSL r4, r4, #16
+	ORR r4, r4, r5
 	LBTR r4, r0, #9
+	ASR r4, r4, #16
+	ADD r4, r4, #1
 
 	MOV r2, #1024
 	SUB r2, r2, #13

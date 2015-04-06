@@ -18,9 +18,10 @@ public class KeyboardDevice extends MemorySpaceDevice
 	public void executeDeviceCycle()
 	{
 		int oldSiz = keyboardData.size();
-		while(Keyboard.next())
-			if(Keyboard.getEventKeyState())
-				keyboardData.add(new Byte[]{(byte) Keyboard.getEventKey(), (byte) Keyboard.getEventCharacter()});
+		if(Keyboard.isCreated())
+			while(Keyboard.next())
+				if(Keyboard.getEventKeyState())
+					keyboardData.add(new Byte[]{(byte) Keyboard.getEventKey(), (byte) Keyboard.getEventCharacter()});
 		
 		if(oldSiz != keyboardData.size())
 			instanceRegisters[0].setValue(Byte.class, (byte)(instanceRegisters[0].getValue(Byte.class) == 0 ? 1 : 0));
