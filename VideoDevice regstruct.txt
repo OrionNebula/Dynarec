@@ -21,3 +21,15 @@ Interrupt Controller
 [Byte command] -> (0 = add, 1 = remove)(0000000 -> interrupt id)
 [Integer toMonitor] -> address to watch for changes in
 [Byte regionLength] -> length of region to watch (in bytes, 1-8)
+
+--------------------
+Keyboard Device
+--------------------
+
+[Byte swap] -> (00000000 swaps b/t 1 and 0 upon update)
+[Byte busy] -> indicates a command to be processed
+[Integer buffLen] -> Length of buffer in pairs
+[Integer readLen] -> length to read in pairs
+[Integer addr] -> address to write byte[readLen * 2] into
+
+Stores in the format {key, char}

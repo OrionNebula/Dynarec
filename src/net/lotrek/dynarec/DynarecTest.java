@@ -9,6 +9,7 @@ import net.lotrek.dynarec.ClassGenerator.Bytecode;
 import net.lotrek.dynarec.ClassGenerator.ConstPoolEntry;
 import net.lotrek.dynarec.ClassGenerator.ConstPoolProvider;
 import net.lotrek.dynarec.devices.InterruptController;
+import net.lotrek.dynarec.devices.KeyboardDevice;
 import net.lotrek.dynarec.devices.VideoDevice;
 import net.lotrek.dynarec.execute.APPLEDRCx64;
 import net.lotrek.dynarec.execute.AppleCasm;
@@ -35,7 +36,7 @@ public class DynarecTest
 			e1.printStackTrace();
 		}*/
 		
-		APPLEDRCx64 drc = new APPLEDRCx64(1024, new byte[0], new VideoDevice(), new InterruptController());
+		APPLEDRCx64 drc = new APPLEDRCx64(1024, new byte[0], new VideoDevice(), new InterruptController(), new KeyboardDevice());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
 			new AppleAsm().assemble(new FileInputStream(new File("test.asm")), baos);

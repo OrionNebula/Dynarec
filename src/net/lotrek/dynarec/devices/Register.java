@@ -136,6 +136,32 @@ public class Register
 		return null;
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <T> T getValue(Class<T> type)
+	{
+		long value = 0;
+		for (int i = addr; i < addr + getTypeLength(); i++)
+			value = (value << 8) + (memoryRef[i] & 0xff);
+		
+		switch(type.getSimpleName())
+		{
+		case "Byte":
+			return (T)(Byte)memoryRef[addr];
+		case "Short":
+			return (T)(Short)(short)value;
+		case "Integer":
+			return (T)(Integer)(int)value;
+		case "Float":
+			return (T)(Float)(float)Float.intBitsToFloat((int)value);
+		case "Long":
+			return (T)(Long)value;
+		case "Double":
+			return (T)(Double)(double)Double.longBitsToDouble(value);
+		}
+		
+		return null;
+	}
+	
 	public <T extends Number> void setValue(Class<T> type, T value)
 	{
 		if(!type.equals(this.type))

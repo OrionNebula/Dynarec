@@ -711,7 +711,7 @@ int len = 1;
 //					System.out.println(Arrays.toString(ret));
 					if(ret[0] == 0)
 					{
-						System.out.println("Cached HLT");
+//						System.out.println("Cached HLT");
 						
 						getRegisters()[15] -= 4;
 								
@@ -733,6 +733,8 @@ int len = 1;
 						Object[] inter = interruptQueue.poll();
 						Register toJump = new Register(Integer.class, (int) getRegisters()[IVT] + 4*(int)inter[0], this.getMemory());
 						setProcMode(1);
+						
+//						System.arraycopy((long[])inter[1], 0, getRegisters(), 0, ((long[])inter[1]).length);
 						getRegisters()[PC] = (int) toJump.getValue();
 						
 						continue;
@@ -836,7 +838,7 @@ int len = 1;
 					
 					setProcMode(0);
 					
-					System.out.println("New HLT");
+//					System.out.println("New HLT");
 					
 					synchronized (lock) {
 						try {

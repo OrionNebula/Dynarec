@@ -10,9 +10,6 @@
 	SUB r0, r0, #13
 	SUB r0, r0, #7
 
-	SUB r2, r0, #14
-	LBTR r2, r0, #2
-
 	MOV r1, #1
 	BTR r1, r0, #6
 	BTR r1, r0, #0
@@ -25,23 +22,6 @@
 	:int:
 	MOV r0, #1024
 	SUB r0, r0, #13
-
-	SUB r0, r0, #21
-	ADD r1, r15, #:vis:
-	ADD r1, r1, #7
-
-	MOV r2, #1
-	LBTR r2, r0, #6
-	LBTR r1, r0, #10
-	BTR r2, r0, #1
-
-	:wait:
-	BFR r3, r0, #1
-BITS64
-	B #:wait: r3, r2, EQ
-BITS32
-
-	ADD r0, r0, #21
 
 	BFR r2, r0, #0
 	MOV r3, #0
@@ -60,11 +40,11 @@ BITS64
 BITS32
 	LBTR r2, r0, #4
 
-	;MOV r2, #65
-	;BTR r2, r0, #8
+	MOV r2, #65
+	BTR r2, r0, #8
 
-	ADD r4, r4, #1
-	LBTR r4, r0, #9
+	LBTR r1, r0, #9
+	ADD r1, r1, #1
 
 	MOV r2, #1024
 	SUB r2, r2, #13
