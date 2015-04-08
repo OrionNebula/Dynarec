@@ -30,8 +30,9 @@
 	ADD r1, r15, #:vis:
 	ADD r1, r1, #7
 
-	MOV r2, #1
+	HBFR r2, r0, #2
 	LBTR r2, r0, #6
+	MOV r2, #1
 	LBTR r1, r0, #10
 	BTR r2, r0, #1
 
@@ -80,7 +81,8 @@ BITS32
 	LBTR r2, r0, #0
 
 BITS64
-	MOV r2, #15613952
+	MOV r2, #-1
+	;15613952
 BITS32
 	LBTR r2, r0, #4
 
