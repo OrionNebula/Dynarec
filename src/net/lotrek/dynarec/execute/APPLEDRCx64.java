@@ -835,7 +835,7 @@ int len = 1;
 				if(ret[0] == 0)
 				{
 					getRegisters()[15] -= 4;
-					System.out.println(Arrays.toString(getRegisters()));
+//					System.out.println(Arrays.toString(getRegisters()));
 					
 					setProcMode(0);
 					

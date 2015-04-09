@@ -47,7 +47,6 @@ public class KeyboardDevice extends MemorySpaceDevice
 
 	public void initializeDevice()
 	{
-		System.out.println(getOccupationAddr());
 		instanceRegisters = struct.getInstance(getOccupationAddr(), this.getProcessor().getMemory());
 	}
 

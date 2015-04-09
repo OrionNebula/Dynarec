@@ -3,7 +3,6 @@ package net.lotrek.dynarec;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 import net.lotrek.dynarec.ClassGenerator.Bytecode;
@@ -13,10 +12,8 @@ import net.lotrek.dynarec.devices.InterruptController;
 import net.lotrek.dynarec.devices.KeyboardDevice;
 import net.lotrek.dynarec.devices.VideoDevice;
 import net.lotrek.dynarec.execute.APPLEDRCx64;
-import net.lotrek.dynarec.execute.AppleAdvAsm;
-import net.lotrek.dynarec.execute.AppleCasm;
 import net.lotrek.dynarec.execute.APPLEDRCx64.InstructionWriter;
-import net.lotrek.dynarec.execute.AppleAsm;
+import net.lotrek.dynarec.execute.AppleAdvAsm;
 
 public class DynarecTest
 {
@@ -37,7 +34,7 @@ public class DynarecTest
 			e1.printStackTrace();
 		}*/
 		
-		APPLEDRCx64 drc = new APPLEDRCx64(1024, new byte[0], new VideoDevice(), new InterruptController(), new KeyboardDevice());
+		APPLEDRCx64 drc = new APPLEDRCx64(20480, new byte[0], new VideoDevice(), new InterruptController(), new KeyboardDevice());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		try {
 			new AppleAdvAsm().assemble(new FileInputStream(new File("advTest.asm")), baos);

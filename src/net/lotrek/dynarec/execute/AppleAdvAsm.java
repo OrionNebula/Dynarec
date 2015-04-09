@@ -1,20 +1,12 @@
 package net.lotrek.dynarec.execute;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
-
-import org.omg.CORBA.DefinitionKind;
-
-import com.sun.xml.internal.ws.api.ha.HaInfo;
 
 import net.lotrek.dynarec.execute.AppleAsm.InstructionAssembler;
 
@@ -75,9 +67,6 @@ public class AppleAdvAsm implements Assembler {
 					case "text":
 						i += generateText(i, lines, dos);
 						break;
-					case "data":
-						i += generateData(i, lines, dos);
-						break;
 					default:
 						scr.close();
 						throw new RuntimeException(String.format("Assembly failed: unknown #mode suffix \"%s\" at line %d", lines.get(i).split(" ")[1], i + 1));
@@ -104,18 +93,16 @@ public class AppleAdvAsm implements Assembler {
 				continue;
 			ArrayList<String> structLines = new ArrayList<>();
 			while(!lines.get(++ind).equals("}"))
-			{
 				structLines.add(lines.get(ind));
-			}
 			defines.put(structDef, new AsmStruct(structDef, structLines.toArray(new String[0])));
 		}
-		
-		defines.forEach((s, x) -> System.out.println(s + " : " + x.getLength(defines)));
 		
 		return ind - indO;
 	}
 	
-	private int generateText(int ind, ArrayList<String> lines, DataOutputStream dos)
+	private int globOff = 0;
+	private HashMap<String, Integer> labels = new HashMap<>();
+	private int generateText(int ind, ArrayList<String> lines, DataOutputStream dos) throws IOException
 	{
 		int indO = ++ind;
 		
@@ -130,8 +117,19 @@ public class AppleAdvAsm implements Assembler {
 			{
 				String line = lines.get(ind);
 				
+				if(line.matches(".*sizeof\\(.*\\).*"))
+				{
+					String type = line.substring(line.indexOf("sizeof(") + "sizeof(".length(), line.indexOf(")"));
+					if(defines.containsKey(type))
+						line = line.replace("sizeof(" + type + ")", "" + defines.get(type).getLength(defines));
+					else if(AsmStruct.typesToLengths.containsKey(type))
+						line = line.replace("sizeof(" + type + ")", "" + AsmStruct.typesToLengths.get(type));
+					else
+						throw new RuntimeException(String.format("Assembly failed: sizeof(%s) is not possible: \"%s\" is not a type", type, type));
+				}
+				
 				for (AsmStruct struct : defines.values())
-					line = line.replace("len(" + struct.name + ")", "" + struct.getLength(defines));
+					line = line.replace("sizeof(" + struct.name + ")", "" + struct.getLength(defines));
 				
 				toAsm += line + "\n";
 			}
@@ -139,23 +137,88 @@ public class AppleAdvAsm implements Assembler {
 			ind++;
 		}
 		
-		try {
-			System.out.println(toAsm);
+//		System.out.println(toAsm);
+		
+		int off = globOff;
+		for (String line : toAsm.split("\n"))
+		{
+			line = line.trim();
+			boolean is64Bit = line.startsWith("64:");
+			if(is64Bit)
+				line = line.substring(3).trim();
+			
+			if(line.matches(":.*:"))
+			{
+				labels.put(line, off);
+				continue;
+			}
+			
+			if(line.matches("\\[\\d\\]"))
+			{
+				off += Integer.parseInt(line.replaceAll("\\[|\\]", ""));
+				continue;
+			}
+			
+			off += is64Bit ? 8 : 4;
+		}
+		
+		for (String line : toAsm.split("\n"))
+		{
+			line = line.trim();
+			boolean is64Bit = line.startsWith("64:");
+			if(is64Bit)
+				line = line.substring(3).trim();
+			
+			line = line.toUpperCase().replace(",", " ").replaceAll(" +", " ");
+			
+			if(line.matches("\\[\\d\\]"))
+			{
+				dos.write(new byte[Integer.parseInt(line.replaceAll("\\[|\\]", ""))]);
+				globOff += Integer.parseInt(line.replaceAll("\\[|\\]", ""));
+				continue;
+			}
+			
+			if(line.matches(":.*:"))
+			{
+				continue;
+			}
+			
+			if(line.contains(":"))
+				for (String label : labels.keySet())
+					line = line.replace(label.toUpperCase(), "" + (labels.get(label) - globOff - (is64Bit ? 8 : 4)));	
+		
+			
+			String[] seg = line.split(" ");
+			String[] seg2 = new String[seg.length + 1];
+			seg2[0] = seg[0];
+			seg2[1] = "AL";
+			System.arraycopy(seg, 1, seg2, 2, seg.length - 1);
+			
+			int toWrite = is64Bit ? 0x8 : 0;
+			toWrite <<= 8;
+			
+			ASMInstructions asm;
+			try {
+				asm = ASMInstructions.valueOf(seg[0]);
+			} catch (IllegalArgumentException e) {
+				continue;
+			}
+			
+			globOff += is64Bit ? 8 : 4;
+			
+			asm.assemble(seg2, (toWrite | asm.getId()) << 4, dos, is64Bit);
+		}
+		
+		/*try {
 			new AppleAsm().assemble(new ByteArrayInputStream(toAsm.getBytes()), dos);
-			new AppleAsm().assemble(new ByteArrayInputStream(toAsm.getBytes()), new FileOutputStream(new File("test.bin")));
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}*/
 		
 		return ind - indO;
 	}
 	
-	private int generateData(int ind, ArrayList<String> lines, DataOutputStream dos)
-	{
-		return 0;
-	}
-	
-	//TODO: allow for array access; use * to store pointers rather than values
+	//TODO: use * to store pointers rather than values
 	
 	private String generateStructSet(String desc)
 	{
@@ -164,9 +227,48 @@ public class AppleAdvAsm implements Assembler {
 		String resReg = desc.split("<\\-")[1].trim();
 		String[] halves = desc.split("<\\-")[0].trim().split("\\.");
 		
-		toReturn += String.format("MOV r0, %s\r", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r") ? halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "") : "#" + halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", ""));
+		//structure
+		String addrReg = halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r") ? halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "") : "r0";
+		if(!halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r"))
+			toReturn += String.format("MOV r0, %s\n", "#" + halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", ""));
 		if(halves[1].matches(".*\\[.*\\].*"))
 		{
+			String type = halves[1].split("\\[")[0].trim(), offsetVal = halves[1].replaceAll(".*\\[", "").replaceAll("\\].*", "").trim(), varIdent = halves[1].split("\\[")[0];
+			
+			offsetVal = offsetVal.startsWith("r") ? offsetVal : ("#" + offsetVal);
+			
+			if(offsetVal.startsWith("r"))
+			{
+				toReturn = String.format("64:MOV r0, #%d\n", getTypeLength(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(type).replaceAll("\\[|\\]", "")));
+				toReturn += String.format("MUL r0, r0, %s\n", offsetVal);
+			}else
+				toReturn = String.format("64:MOV r0, #%d\n", getTypeLength(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(type).replaceAll("\\[|\\]", "")) * Integer.parseInt(halves[1].replaceAll(".*\\[", "").replaceAll("\\].*", "").trim()));
+		
+			toReturn += String.format("ADD r0, r0, %s\n", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase());
+			addrReg = "r0";
+			
+			if(defines.containsKey(halves[0].replaceAll("\\[.*", "").trim()))
+			{
+				switch(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(varIdent).replaceAll("\\[|\\]", ""))
+				{
+				case "int":
+					toReturn += String.format("LBTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					break;
+				case "double":
+				case "long":
+					toReturn += String.format("RTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					break;
+				case "short":
+					toReturn += String.format("AND %s, %s, #65536\nLSL %s, %s, #16\n", resReg, resReg, resReg, resReg);
+					toReturn += String.format("LBTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					break;
+				case "byte":
+					toReturn += String.format("BTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					break;
+
+				}
+			}else
+				throw new RuntimeException(String.format("Assembly failed: \"%s\" is not a defined structure", halves[0].replaceAll("\\[.*", "").trim()));
 			
 		}else
 		{
@@ -175,18 +277,18 @@ public class AppleAdvAsm implements Assembler {
 				switch(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(halves[1]))
 				{
 				case "int":
-					toReturn += String.format("LBTR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("LBTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					break;
 				case "double":
 				case "long":
-					toReturn += String.format("RTR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("RTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					break;
 				case "short":
 					toReturn += String.format("AND %s, %s, #65536\nLSL %s, %s, #16\n", resReg, resReg, resReg, resReg);
-					toReturn += String.format("LBTR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("LBTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					break;
 				case "byte":
-					toReturn += String.format("BTR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("BTR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					break;
 
 				}
@@ -204,9 +306,47 @@ public class AppleAdvAsm implements Assembler {
 		String resReg = desc.split("\\->")[1].trim();
 		String[] halves = desc.split("\\->")[0].trim().split("\\.");
 		
-		toReturn += String.format("MOV r0, %s\r", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r") ? halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "") : "#" + halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", ""));
+		String addrReg = halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r") ? halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "") : "r0";
+		if(!halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r"))
+			toReturn += String.format("MOV r0, %s\n", "#" + halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", ""));
 		if(halves[1].matches(".*\\[.*\\].*"))
 		{
+			String type = halves[1].split("\\[")[0].trim(), offsetVal = halves[1].replaceAll(".*\\[", "").replaceAll("\\].*", "").trim(), varIdent = halves[1].split("\\[")[0];
+			
+			offsetVal = offsetVal.startsWith("r") ? offsetVal : ("#" + offsetVal);
+			
+			if(offsetVal.startsWith("r"))
+			{
+				toReturn = String.format("64:MOV r0, #%d\n", getTypeLength(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(type).replaceAll("\\[|\\]", "")));
+				toReturn += String.format("MUL r0, r0, %s\n", offsetVal);
+			}else
+				toReturn = String.format("64:MOV r0, #%d\n", getTypeLength(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(type).replaceAll("\\[|\\]", "")) * Integer.parseInt(halves[1].replaceAll(".*\\[", "").replaceAll("\\].*", "").trim()));
+		
+			toReturn += String.format("ADD r0, r0, %s\n", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase());
+			addrReg = "r0";
+			
+			if(defines.containsKey(halves[0].replaceAll("\\[.*", "").trim()))
+			{
+				switch(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(varIdent).replaceAll("\\[|\\]", ""))
+				{
+				case "int":
+					toReturn += String.format("HBFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					break;
+				case "double":
+				case "long":
+					toReturn += String.format("RFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					break;
+				case "short":
+					toReturn += String.format("HBFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					toReturn += String.format("ASR %s, %s, #16\nAND %s, %s, #65536\n", resReg, resReg, resReg, resReg);
+					break;
+				case "byte":
+					toReturn += String.format("BFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, varIdent));
+					break;
+
+				}
+			}else
+				throw new RuntimeException(String.format("Assembly failed: \"%s\" is not a defined structure", halves[0].replaceAll("\\[.*", "").trim()));
 			
 		}else
 		{
@@ -215,18 +355,18 @@ public class AppleAdvAsm implements Assembler {
 				switch(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(halves[1]))
 				{
 				case "int":
-					toReturn += String.format("HBFR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("HBFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					break;
 				case "double":
 				case "long":
-					toReturn += String.format("RFR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("RFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					break;
 				case "short":
-					toReturn += String.format("HBFR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("HBFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					toReturn += String.format("ASR %s, %s, #16\nAND %s, %s, #65536\n", resReg, resReg, resReg, resReg);
 					break;
 				case "byte":
-					toReturn += String.format("BFR %s, r0, #%d\n", resReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
+					toReturn += String.format("BFR %s, %s, #%d\n", resReg, addrReg, defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarOffset(defines, halves[1]));
 					break;
 
 				}
@@ -237,6 +377,16 @@ public class AppleAdvAsm implements Assembler {
 		return toReturn;
 	}
 
+	private int getTypeLength(String type)
+	{
+		if(defines.containsKey(type))
+			return defines.get(type).getLength(defines);
+		else if(AsmStruct.typesToLengths.containsKey(type))
+			return AsmStruct.typesToLengths.get(type);
+		
+		throw new RuntimeException(String.format("Assembly failed: \"%s\" does not represent a valid type", type));
+	}
+	
 	private static class AsmStruct
 	{
 		public static final HashMap<String, Integer> typesToLengths = new HashMap<>();
