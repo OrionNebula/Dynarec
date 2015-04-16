@@ -1,11 +1,20 @@
 package net.lotrek.dynarec.execute;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 import net.lotrek.dynarec.ByteArrayClassLoader;
 import net.lotrek.dynarec.ClassGenerator;
@@ -22,6 +31,8 @@ public class APPLEDRCx64 extends Processor
 	private long[][] registers = new long[2][16];
 	private volatile boolean shouldTerm, isHalted;
 	private int stackSize = 10, varSize = 10;
+	private long totExecTime, totExecFrames, totNewFrames, totInst;
+	private HashMap<MemorySpaceDevice, JPanel> panelList = new HashMap<>();
 	private ByteArrayClassLoader bacl = new ByteArrayClassLoader();
 	private HashMap<String, Integer> volatileKeys = new HashMap<>();
 	private final Object lock = new Object();
@@ -696,6 +707,91 @@ int len = 1;
 		super(memorySize, biosImage, memorySpaceDevices);
 	}
 
+	public void startDebugPane()
+	{
+		final APPLEDRCx64 th = this;
+		
+		new Thread()
+		{
+			public void run()
+			{
+				JFrame frame = new JFrame();
+				JPanel text = new JPanel(), vis = new JPanel(){
+
+					private static final long serialVersionUID = 1L;
+					
+					public void paintComponent(Graphics g)
+					{
+						super.paintComponent(g);
+						for (int x = 0; x < Math.ceil(th.getMemory().length/480d); x++)
+						{
+							for(int y = 0; y < 480; y++)
+							{
+								int i = x*480 + y;
+								int v = i < th.getMemorySize() ? th.getMemory()[i]+128 : 0;
+								Color c = new Color(v > 0 && v <= 255 / 3 ? v : 0, v > 255/3 && v <= 255/3*2 ? v : 0, v > 255/3*2 && v <= 255 ? v : 0);
+								g.setColor(c);
+								g.fillRect(x*1, y, 1, 1);
+							}
+						}
+					}
+				};
+				text.setSize(640, 480);
+				frame.setTitle("APPLEDRCx64 debug panel");
+				frame.setSize((int) (640 + Math.ceil(th.getMemory().length/480d)), 480);
+				frame.setResizable(false);
+				frame.setLayout(new GridBagLayout());
+				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				GridBagConstraints c = new GridBagConstraints();
+				JLabel execStats = new JLabel(), execTotals = new JLabel(), memoryStats = new JLabel();
+				c.fill = GridBagConstraints.VERTICAL;
+				c.gridx = 1;
+				c.gridy = 1;
+				c.gridheight = GridBagConstraints.REMAINDER;
+				frame.add(text, c);
+					text.setLayout(new GridLayout(0,1));
+					text.add(execTotals);
+					text.add(execStats);
+					text.add(memoryStats);
+				c.gridx = 1;
+				frame.add(vis, c);
+					vis.setBackground(Color.black);
+					vis.setSize((int) Math.ceil(th.getMemory().length/480d), 480);
+				frame.setVisible(true);
+				
+				while(true)
+				{
+					execTotals.setText(String.format("Total segments: %d; Total execution time: %d ns", totExecFrames, totExecTime));
+					execStats.setText(String.format("Average segment time: %.2f ns; Average instruction count: %.2f;", (float)(totExecTime) / (float)(totExecFrames), (float)(totInst) / (float)(totNewFrames)));
+					
+					int nzero = 0;
+					for (int i = 0; i < th.getMemory().length; i++)
+						if(th.getMemory()[i] != 0)
+							nzero++;
+					
+					memoryStats.setText(String.format("Total memory: %d bytes; Available memory: %d bytes; Nonzero memory: %d bytes;", th.getMemorySize(), th.getAvailableMemory(), nzero));
+					
+					vis.repaint();
+					
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}.start();
+	}
+	
+	public JPanel getPanelForDevice(MemorySpaceDevice dev)
+	{
+		if(panelList.containsKey(dev))
+			return panelList.get(dev);
+
+		panelList.put(dev, new JPanel());
+		return getPanelForDevice(dev);
+	}
+	
 	//TODO: Finish instruction set - condition codes
 	protected void executeImpl()
 	{
@@ -703,6 +799,8 @@ int len = 1;
 		{
 			int addr = (int) getRegisters()[PC];
 			int[] sh = hashCodeSegment(getMemory(), addr, 0xabec42eb);
+			totExecFrames++;
+			long time = System.nanoTime();
 			if(compiledSegments.containsKey(sh[0]))
 				try {
 //					registers[15] += sh[1];
@@ -716,6 +814,8 @@ int len = 1;
 						getRegisters()[15] -= 4;
 								
 						setProcMode(0);
+						
+						totExecTime += System.nanoTime() - time;
 						
 						synchronized (lock) {
 							try {
@@ -767,12 +867,15 @@ int len = 1;
 							ret[0] = 0;
 						break;
 					}
-					
-//					System.out.println("Cache " + ret[0] + " : " + addr + " : " + sh[0]);
+
+//					System.out.printf("%d : %d : %d | %s\n", ret[1], ret[3], ret[2], Arrays.toString(getRegisters()));
+					//System.out.println("Cache " + ret[0] + " : " + addr + " : " + sh[0]);
 					getRegisters()[PC] += ret[0];
 					
 					if(interruptQueue.size() > 0 && getRegisters()[ProcMode] == 0)
 					{
+						totExecTime += System.nanoTime() - time;
+						
 						setProcMode(0);
 						
 						Object[] inter = interruptQueue.poll();
@@ -788,6 +891,8 @@ int len = 1;
 				}
 			else
 			try {
+				totNewFrames++;
+				
 				volatileKeys.clear();
 				ClassGenerator gen = new ClassGenerator("ClassGen0x" + Integer.toHexString(addr) + Integer.toHexString(sh[0]));
 
@@ -807,6 +912,8 @@ int len = 1;
 						long linst = (long)Register.getTypeForBytes(Long.class, getMemory(), addr + i);
 						proc[(int)(linst >> 52) & 0xff].writeInstruction(linst, gen);
 						
+						totInst++;
+						
 						i += 8;
 					}else
 					{
@@ -819,6 +926,8 @@ int len = 1;
 						long linst = (long)inst & 0xffffffffl;
 						proc[(int)(inst >> 20) & 0xff].writeInstruction(linst, gen);
 
+						totInst++;
+						
 						i += 4;
 					}
 				}
@@ -840,6 +949,9 @@ int len = 1;
 					setProcMode(0);
 					
 //					System.out.println("New HLT");
+//					System.out.println(Arrays.toString(getRegisters()));
+					
+					totExecTime += System.nanoTime() - time;
 					
 					synchronized (lock) {
 						try {
@@ -889,12 +1001,14 @@ int len = 1;
 						ret[0] = 0;
 					break;
 				}
-				
-				System.out.println("New " + ret[0] + " : " + addr + " : " + sh[0]);
+//				System.out.printf("%d : %d : %d | %s\n", ret[1], ret[3], ret[2], Arrays.toString(getRegisters()));
+//				System.out.println("New " + ret[0] + " : " + addr + " : " + sh[0]);
 				getRegisters()[15] += ret[0];
 				
 				if(interruptQueue.size() > 0 && getRegisters()[ProcMode] == 0)
 				{
+					totExecTime += System.nanoTime() - time;
+					
 					setProcMode(0);
 					
 					Object[] inter = interruptQueue.poll();
@@ -910,8 +1024,6 @@ int len = 1;
 				e.printStackTrace();
 			}
 		}
-		
-		System.out.println(Arrays.toString(getRegisters()));
 	}
 	
 	protected void terminateImpl()

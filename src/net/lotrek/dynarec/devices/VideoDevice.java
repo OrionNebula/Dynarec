@@ -52,8 +52,6 @@ public class VideoDevice extends MemorySpaceDevice
 				int instAddr = (int)instanceRegisters[3].getValue();
 				if(instAddr != 0)
 				{
-					instanceRegisters[3].setValue(Integer.class, 0);
-					
 					int len = (int) Register.getTypeForBytes(Integer.class, this.getProcessor().getMemory(), instAddr);
 					for (int i = 0; i < len; i++)
 					{
@@ -107,6 +105,7 @@ public class VideoDevice extends MemorySpaceDevice
 		instanceRegisters[2].setValue(Integer.class, INITIAL_HEIGHT);
 		
 		try {
+			Display.setTitle(String.format("%s VideoDevice; %d bytes of memory; %d bytes usable", this.getProcessor().getClass().getSimpleName(), this.getProcessor().getMemorySize(), this.getProcessor().getAvailableMemory()));
 			Display.setDisplayMode(new DisplayMode(INITAL_WIDTH, INITIAL_HEIGHT));
 			Display.create();
 			font = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, new FileInputStream(new File("./res/Perfect DOS VGA 437 Win.ttf"))).deriveFont(Font.PLAIN, Display.getHeight() / 32), false);

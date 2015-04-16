@@ -1,5 +1,7 @@
 package net.lotrek.dynarec.execute;
 
+import javax.swing.JPanel;
+
 import net.lotrek.dynarec.devices.MemorySpaceDevice;
 
 public abstract class Processor
@@ -68,4 +70,6 @@ public abstract class Processor
 	protected abstract void terminateImpl();
 	protected abstract void executeImpl();
 	public abstract void interrupt(int index, long...parameters);
+	public abstract void startDebugPane();
+	public abstract JPanel getPanelForDevice(MemorySpaceDevice dev);
 }

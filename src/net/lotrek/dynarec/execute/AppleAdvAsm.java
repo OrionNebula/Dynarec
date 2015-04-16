@@ -7,6 +7,9 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.lotrek.dynarec.execute.AppleAsm.InstructionAssembler;
 
@@ -64,6 +67,8 @@ public class AppleAdvAsm implements Assembler {
 					case "defines":
 						i += generateDefines(i, lines, dos);
 						break;
+					case "data":
+						i += generateData(i, lines, dos);
 					case "text":
 						i += generateText(i, lines, dos);
 						break;
@@ -81,7 +86,30 @@ public class AppleAdvAsm implements Assembler {
 		scr.close();
 	}
 	
+	private HashMap<String, String> variables = new HashMap<>();
+	private String dataPostfix = "";
+	private int generateData(int ind, ArrayList<String> lines, DataOutputStream dos)
+	{
+		int indO = ++ind;
+		
+		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
+		{
+			String structDef = lines.get(ind++);
+			variables.put(structDef.split(" ")[1], structDef.split(" ")[0]);
+			dataPostfix += String.format(":V%sV:\n", structDef.split(" ")[1]);
+			dataPostfix += String.format("[%d]\n", getTypeLength(structDef.split(" ")[0]));
+		}
+		
+		return ind - indO;
+	}
+	
 	private HashMap<String, AsmStruct> defines = new HashMap<>();
+	{
+		defines.put("L@int", new AsmStruct("L@int", new String[]{"int value"}));
+		defines.put("L@long", new AsmStruct("L@long", new String[]{"long value"}));
+		defines.put("L@byte", new AsmStruct("L@byte", new String[]{"byte value"}));
+		defines.put("L@double", new AsmStruct("L@double", new String[]{"double value"}));
+	}
 	private int generateDefines(int ind, ArrayList<String> lines, DataOutputStream dos)
 	{
 		int indO = ++ind;
@@ -106,13 +134,152 @@ public class AppleAdvAsm implements Assembler {
 	{
 		int indO = ++ind;
 		
+		int loopLabel = 0;
+		Stack<String> loopTags = new Stack<>();
 		String toAsm = "";
 		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
 		{
-			if(lines.get(ind).contains("->"))
+			if(lines.get(ind).equals("#data"))
+			{
+				toAsm += dataPostfix;
+				dataPostfix = "";
+			}else if(lines.get(ind).contains("->"))
 				toAsm += generateStructAccess(lines.get(ind));
 			else if(lines.get(ind).contains("<-"))
 				toAsm += generateStructSet(lines.get(ind));
+			else if(lines.get(ind).startsWith("goto"))
+				toAsm += String.format("64:B #%s, r0, r0, #0\n", lines.get(ind).replaceAll("goto\\s*", ""));
+			else if(lines.get(ind).equals("end"))
+			{
+				toAsm += loopTags.pop() + "\n";
+			}
+			else if(lines.get(ind).startsWith("if"))
+			{
+				if(!lines.get(ind).contains("goto"))
+				{
+					String lbl = String.format(":L%dL:", loopLabel++);
+					loopTags.push(lbl);
+					
+					String arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("if.*\\(|\\).*", ""),
+							arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("if.*\\(|\\).*", ""),
+							op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|if.*\\(|\\).*", arg1, arg2), "");
+					
+					toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);;
+					
+					switch(op)
+					{
+					case "!=":
+						toAsm += "#3\n";
+						break;
+					case "<=":
+						toAsm += "#4\n";
+						break;
+					case ">=":
+						toAsm += "#2\n";
+						break;
+					case "<":
+						toAsm += "#6\n";
+						break;
+					case ">":
+						toAsm += "#5\n";
+						break;
+					case "=":
+						toAsm += "#1\n";
+						break;
+					default:
+						throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"^%s\"", op));
+					}
+					ind++;
+					continue;
+				}
+				
+				if(lines.get(ind).replaceAll("if.*\\(", "").replaceAll("\\).*", "").equals("true"))
+				{
+					toAsm += String.format("64:B #%s, r0, r0, #0\n", lines.get(ind).replaceAll("\\s", "").split("goto")[1].trim());
+					ind++;
+					continue;
+				}
+				
+				String lbl = lines.get(ind).replaceAll("\\s", "").split("goto")[1].trim(),
+						arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("if.*\\(|\\).*", ""),
+						arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("if.*\\(|\\).*", ""),
+						op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|if.*\\(|\\).*", arg1, arg2), "");
+				
+				toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);
+				
+				switch(op)
+				{
+				case "!=":
+					toAsm += "#1\n";
+					break;
+				case "<=":
+					toAsm += "#5\n";
+					break;
+				case ">=":
+					toAsm += "#6\n";
+					break;
+				case "<":
+					toAsm += "#2\n";
+					break;
+				case ">":
+					toAsm += "#4\n";
+					break;
+				case "=":
+					toAsm += "#3\n";
+					break;
+				default:
+					System.out.printf("%s %s %s\n", arg1, op, arg2);
+					throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"%s\"", op));
+				}
+			}
+			else if(lines.get(ind).equals("do"))
+			{
+				String lbl = String.format(":L%dL:", loopLabel++);
+				toAsm += lbl + "\n";
+				loopTags.push(lbl);
+			}else if(lines.get(ind).replaceAll("\\s", "").startsWith("while("))
+			{
+				if(loopTags.isEmpty())
+					throw new RuntimeException("Assembly failed: orphaned \"while\"");
+				
+				if(lines.get(ind).replaceAll("while.*\\(", "").replaceAll("\\).*", "").equals("true"))
+				{
+					toAsm += String.format("64:B #%s, r0, r0, #0\n", loopTags.pop());
+					ind++;
+					continue;
+				}
+				
+				String lbl = loopTags.pop(),
+						arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("while.*\\(|\\).*", ""),
+						arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("while.*\\(|\\).*", ""),
+						op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|while.*\\(|\\).*", arg1, arg2), "");
+				
+				toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);
+				
+				switch(op)
+				{
+				case "!=":
+					toAsm += "#1\n";
+					break;
+				case "<=":
+					toAsm += "#5\n";
+					break;
+				case ">=":
+					toAsm += "#6\n";
+					break;
+				case "<":
+					toAsm += "#2\n";
+					break;
+				case ">":
+					toAsm += "#4\n";
+					break;
+				case "=":
+					toAsm += "#3\n";
+					break;
+				default:
+					throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"^%s\"", op));
+				}
+			}
 			else
 			{
 				String line = lines.get(ind);
@@ -120,12 +287,18 @@ public class AppleAdvAsm implements Assembler {
 				if(line.matches(".*sizeof\\(.*\\).*"))
 				{
 					String type = line.substring(line.indexOf("sizeof(") + "sizeof(".length(), line.indexOf(")"));
-					if(defines.containsKey(type))
-						line = line.replace("sizeof(" + type + ")", "" + defines.get(type).getLength(defines));
-					else if(AsmStruct.typesToLengths.containsKey(type))
-						line = line.replace("sizeof(" + type + ")", "" + AsmStruct.typesToLengths.get(type));
-					else
-						throw new RuntimeException(String.format("Assembly failed: sizeof(%s) is not possible: \"%s\" is not a type", type, type));
+					line = line.replace(String.format("sizeof(%s)", type), "" + getTypeLength(type));
+				}
+				
+				if(line.matches(".*0x[0-9A-Fa-f]{1,8}.*"))
+				{
+					Matcher hex = Pattern.compile("0x[0-9A-Fa-f]{1,8}").matcher(line);
+					
+					while(hex.find())
+					{
+						String num = hex.group();
+						line = line.replace(num, "" + Integer.parseInt(num.substring(2), 16));
+					}
 				}
 				
 				for (AsmStruct struct : defines.values())
@@ -225,8 +398,37 @@ public class AppleAdvAsm implements Assembler {
 		String toReturn = "";
 		
 		String resReg = desc.split("<\\-")[1].trim();
-		String[] halves = desc.split("<\\-")[0].trim().split("\\.");
 		
+		//variable
+		if(variables.containsKey(desc.split("<\\-")[0].trim().split("\\[|\\.")[0]))
+		{
+			String name = desc.split("<\\-")[0].trim().split("\\[|\\.")[0], type = variables.get(name);
+			String toRender = " <- " + resReg;
+			
+			
+			if(type.contains("["))
+			{
+				int lenOffset = getTypeLength(type.split("\\[")[0]) * Integer.parseInt(desc.split("<\\-")[0].trim().split("\\[|\\]")[1]);
+
+				if(defines.containsKey(type.replaceAll("\\[.*", "")))
+					toRender = String.format("%s[r0].%s", type, desc.split("\\.")[1]) + toRender;
+				else
+					toRender = String.format("L@%s[r0].value", type) + toRender;
+				
+				return String.format("ADD r0, r15, #:V%sV:\nADD r0, r0, #%d\n", name, lenOffset) + generateStructSet(toRender);
+			}else
+			{
+				if(defines.containsKey(type))
+					toRender = String.format("%s[r0].%s", type, desc.split("\\.")[1]) + toRender;
+				else
+					toRender = String.format("L@%s[r0].value", type) + toRender;
+				
+				return String.format("ADD r0, r15, #:V%sV:\n", name) + generateStructSet(toRender);
+			}
+		}
+		
+		String[] halves = desc.split("<\\-")[0].trim().split("\\.");
+
 		//structure
 		String addrReg = halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r") ? halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "") : "r0";
 		if(!halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r"))
@@ -304,6 +506,42 @@ public class AppleAdvAsm implements Assembler {
 		String toReturn = "";
 		
 		String resReg = desc.split("\\->")[1].trim();
+		
+		//variable
+		if(variables.containsKey(desc.split("\\->")[0].trim().split("\\[|\\.")[0].replace("*", "")))
+		{
+			String name = desc.split("\\->")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("*", ""));
+			String toRender = " -> " + resReg;
+			
+			if(type.contains("[") && !name.contains("*"))
+			{
+				int lenOffset = getTypeLength(type.split("\\[")[0]) * Integer.parseInt(desc.split("<\\-")[0].trim().split("\\[|\\]")[1]);
+
+				if(defines.containsKey(type.replaceAll("\\[.*", "")))
+					toRender = String.format("%s[r0].%s", type, desc.split("\\.")[1]) + toRender;
+				else
+					toRender = String.format("L@%s[r0].value", type) + toRender;
+				
+				return String.format("ADD r0, r15, #:V%sV:\nADD r0, r0, #%d\n", name, lenOffset) + generateStructAccess(toRender);
+			}else
+			{
+				String addrReg = "r0";
+				boolean isPointer = name.contains("*");
+				if(isPointer)
+				{
+					name = name.replace("*", "");
+					addrReg = resReg;
+				}
+				
+				if(defines.containsKey(type) && !isPointer)
+					toRender = String.format("%s[r0].%s", type, desc.split("\\.")[1]) + toRender;
+				else
+					toRender = String.format("L@%s[r0].value", type) + toRender;
+				
+				return String.format("ADD %s, r15, #:V%sV:\n", addrReg, name) + (isPointer ? "" : generateStructAccess(toRender));
+			}
+		}
+		
 		String[] halves = desc.split("\\->")[0].trim().split("\\.");
 		
 		String addrReg = halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase().startsWith("r") ? halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "") : "r0";
@@ -379,6 +617,13 @@ public class AppleAdvAsm implements Assembler {
 
 	private int getTypeLength(String type)
 	{
+		if(type.matches(".*\\[.*\\]"))
+		{
+			if(type.matches(".*\\[\\]"))
+				return 0;
+			return getTypeLength(type.split("\\[")[0])*Integer.parseInt(type.split("\\[|\\]")[1]);
+		}
+		
 		if(defines.containsKey(type))
 			return defines.get(type).getLength(defines);
 		else if(AsmStruct.typesToLengths.containsKey(type))

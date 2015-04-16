@@ -1,82 +1,126 @@
 #mode defines
+	VideoDevice
+	{
+		byte status
+		int width
+		int height
+		int instAddr
+	}
 
-VideoDevice
-{
-	byte status
-	int width
-	int height
-	int instAddr
-}
+	IntCtrl
+	{
+		byte status
+		byte command
+		int toMonitor
+		byte regionLength
+	}
 
-IntCtrl
-{
-	byte status
-	byte command
-	int toMonitor
-	byte regionLength
-}
+	Keyboard
+	{
+		byte swap
+		byte busy
+		int bufferLen
+		int readLen
+		int addr
+	}
 
-Keyboard
-{
-	byte swap
-	byte busy
-	int bufferLen
-	int readLen
-	int addr
-}
+	Keystroke
+	{
+		byte key
+		byte char
+	}
 
-GraphicsCommand
-{
-	int color
-	byte char
-	byte dX
-	byte x
-	byte dY
-	byte y
-}
+	GraphicsCommand
+	{
+		int color
+		byte char
+		byte dX
+		byte x
+		byte dY
+		byte y
+	}
 
+	IVT
+	{
+		int monitorAddr
+	}
+#mode data
+	IVT ivtTable
+	int graphLen
+	GraphicsCommand com
+	byte keyLen
+	Keystroke strokePointer
 #mode text
-	
-	MOV r1, #20480
-	SUB r1, r1, #sizeof(VideoDevice)
-	
-	MOV r4, #0
-	MOV r5, #64
-	MOV r6, #32
+		ivtTable* -> r12
+		ADD r2, r15, #:keyInterrupt:
+		ivtTable.monitorAddr <- r2
 
-	ADD r2, r15, #:@com@:
-	VideoDevice[r1].instAddr <- r2
-	ADD r7, r6, #1
-	MUL r7, r7, r5
-	LBTR r7, r2, #0
-	ADD r2, r2, #4
-	
-	:extern:
+		MOV r3, #20480
+		SUB r3, r3, #sizeof(VideoDevice)
+		SUB r3, r3, #sizeof(IntCtrl)
+		SUB r2, r3, #sizeof(Keyboard)
 
-	MOV r5, #64
-	SUB r6, r6, #1
-
-	:loop:
-
-	SUB r5, r5, #1
-
-	64: MOV r3, #4874372
-	GraphicsCommand[r2].color <- r3
-	ADD r3, r5, #33
-	ADD r3, r3, r6
-	GraphicsCommand[r2].char <- r3
-	GraphicsCommand[r2].x <- r5
-	GraphicsCommand[r2].y <- r6
-	
-	ADD r2, r2, #sizeof(GraphicsCommand)
-	64: B #:loop:, r5, r4, #4
-
-	64: B #:extern:, r6, r4, #4
-
-	MOV r3, #1
-	VideoDevice[r1].status <- r3
+		IntCtrl[r3].toMonitor <- r2
+		MOV r2, #1
+		IntCtrl[r3].regionLength <- r2
+		IntCtrl[r3].status <- r2
 
 	HLT
-	:@com@:
-	[4]
-	[sizeof(GraphicsCommand)]
+	:keyInterrupt:
+		MOV r2, #20480
+		SUB r2, r2, #sizeof(VideoDevice)
+
+		graphLen* -> r3
+		VideoDevice[r2].instAddr <- r3
+
+		SUB r2, r2, #sizeof(IntCtrl)
+		SUB r2, r2, #sizeof(Keyboard)
+
+		Keyboard[r2].bufferLen -> r3
+		Keyboard[r2].readLen <- r3
+		keyLen <- r3
+		strokePointer* -> r3
+		Keyboard[r2].addr <- r3
+		MOV r3, #1
+		Keyboard[r2].busy <- r3
+		MOV r4, #0
+
+		do
+			Keyboard[r2].busy -> r3
+		while(r4 != r3)
+
+		keyLen -> r5
+
+		do
+			64: MOV r3, #0xffffff
+			com.color <- r3
+			MUL r3, r4, #sizeof(Keystroke)
+			strokePointer* -> r7
+			ADD r3, r3, r7
+			Keystroke[r3].char -> r3
+			com.char <- r3
+			com.x <- r1
+			com.y <- r9
+
+			MOV r3, #1
+			graphLen <- r3
+			MOV r2, #20480
+			SUB r2, r2, #sizeof(VideoDevice)
+			VideoDevice[r2].status <- r3
+
+			do
+				VideoDevice[r2].status -> r3
+				MOV r6, #0
+			while(r6 != r3)
+
+			ADD r4, r4, #1
+			ADD r1, r1, #1
+			MOV r8, #64
+			if(r1 >= r8)
+				MOV r1, #0
+				ADD r9, r9, #1
+			end
+		while(r5 != r4)
+
+	RET
+	#data

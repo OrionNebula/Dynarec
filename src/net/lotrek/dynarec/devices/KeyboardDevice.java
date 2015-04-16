@@ -1,5 +1,6 @@
 package net.lotrek.dynarec.devices;
 
+import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.lwjgl.input.Keyboard;
