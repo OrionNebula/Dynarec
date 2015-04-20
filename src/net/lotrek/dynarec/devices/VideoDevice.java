@@ -19,7 +19,7 @@ public class VideoDevice extends MemorySpaceDevice
 {
 	public static final int RENDER_TEXT = 0, RENDER_RAW = 1, INITAL_WIDTH = 1280, INITIAL_HEIGHT = 960;
 	
-	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class), pixelStructure = new Structure(Integer.class, Byte.class, Short.class, Short.class);
+	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class), pixelStructure = new Structure(Byte.class, Integer.class, Byte.class, Byte.class);
 	private Register[] instanceRegisters;
 	private TrueTypeFont font;
 	private int renderMode;
@@ -41,7 +41,6 @@ public class VideoDevice extends MemorySpaceDevice
 			int w = (int) instanceRegisters[1].getValue(), h = (int) instanceRegisters[2].getValue();
 			if(w != Display.getWidth() || h != Display.getHeight())
 				try {
-//					System.out.println(Display.getWidth() + " x " + Display.getHeight() + " : " + w + " x " + h);
 					Display.setDisplayMode(new DisplayMode(w, h));
 				} catch (LWJGLException e) {
 					e.printStackTrace();
@@ -55,11 +54,13 @@ public class VideoDevice extends MemorySpaceDevice
 					int len = (int) Register.getTypeForBytes(Integer.class, this.getProcessor().getMemory(), instAddr);
 					for (int i = 0; i < len; i++)
 					{
-						Register[] str = pixelStructure.getInstance(instAddr + 4 + i * 9, this.getProcessor().getMemory());
+						Register[] str = pixelStructure.getInstance(instAddr + 4 + i * pixelStructure.getLength(), this.getProcessor().getMemory());
 						
-						short x = (short) str[2].getValue(), y = (short) str[3].getValue();
-						screenColors[y][x] = new Color((int)str[0].getValue());
-						screenText[y][x] = (char)(byte)str[1].getValue();
+						int x = (byte) str[2].getValue(), y = (byte) str[3].getValue();
+						if((byte)str[0].getValue() == 0)
+							screenText[y][x] = (char)(int)str[1].getValue();
+						if((byte)str[0].getValue() == 1)
+							screenColors[y][x] = new Color((int)str[1].getValue());
 					}
 				}
 				

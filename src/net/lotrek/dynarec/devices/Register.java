@@ -111,6 +111,11 @@ public class Register
 		return null;
 	}
 	
+	public int getAddress()
+	{
+		return addr;
+	}
+	
 	public Object getValue()
 	{
 		long value = 0;

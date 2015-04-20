@@ -8,7 +8,6 @@ import java.awt.GridLayout;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -791,7 +790,7 @@ int len = 1;
 		panelList.put(dev, new JPanel());
 		return getPanelForDevice(dev);
 	}
-	
+
 	//TODO: Finish instruction set - condition codes
 	protected void executeImpl()
 	{

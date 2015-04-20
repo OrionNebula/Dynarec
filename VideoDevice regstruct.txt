@@ -8,8 +8,8 @@ Struct -> gpu instruction
 [Byte[] code]
 
 Code def
-[Integer color]
-[Byte char]
+[Byte command] -> 0 = set char, 1 = set color
+[Integer data]
 [Short x]
 [Short y]
 

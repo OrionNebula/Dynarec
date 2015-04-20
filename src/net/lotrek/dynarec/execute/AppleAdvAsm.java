@@ -62,6 +62,8 @@ public class AppleAdvAsm implements Assembler {
 		for (int i = 0; i < lines.size(); i++)
 		{
 			if(lines.get(i).startsWith("#mode"))
+			{
+				System.out.printf("Encountered section %s\n", lines.get(i).split(" ")[1]);
 				switch(lines.get(i).split(" ")[1])
 				{
 					case "defines":
@@ -76,6 +78,7 @@ public class AppleAdvAsm implements Assembler {
 						scr.close();
 						throw new RuntimeException(String.format("Assembly failed: unknown #mode suffix \"%s\" at line %d", lines.get(i).split(" ")[1], i + 1));
 				}
+			}
 			else
 			{
 				scr.close();
@@ -95,6 +98,7 @@ public class AppleAdvAsm implements Assembler {
 		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
 		{
 			String structDef = lines.get(ind++);
+			System.out.printf("Defined variable %s with type %s\n", structDef.split(" ")[1], structDef.split(" ")[0]);
 			variables.put(structDef.split(" ")[1], structDef.split(" ")[0]);
 			dataPostfix += String.format(":V%sV:\n", structDef.split(" ")[1]);
 			dataPostfix += String.format("[%d]\n", getTypeLength(structDef.split(" ")[0]));
@@ -122,6 +126,7 @@ public class AppleAdvAsm implements Assembler {
 			ArrayList<String> structLines = new ArrayList<>();
 			while(!lines.get(++ind).equals("}"))
 				structLines.add(lines.get(ind));
+			System.out.printf("Defined structure %s with content %s\n", structDef, structLines.toString());
 			defines.put(structDef, new AsmStruct(structDef, structLines.toArray(new String[0])));
 		}
 		

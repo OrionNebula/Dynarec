@@ -1,6 +1,5 @@
 package net.lotrek.dynarec.devices;
 
-import java.util.Arrays;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.lwjgl.input.Keyboard;
@@ -34,7 +33,7 @@ public class KeyboardDevice extends MemorySpaceDevice
 			byte[] b = new byte[length * 2];
 			for (int i = 0; i < b.length && !keyboardData.isEmpty(); i += 2) {
 				Byte[] data = keyboardData.poll();
-				b[i] = data[0]; 
+				b[i] = data[0];
 				b[i + 1] = data[1];
 			}
 			
