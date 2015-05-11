@@ -791,7 +791,6 @@ int len = 1;
 		return getPanelForDevice(dev);
 	}
 
-	//TODO: Finish instruction set - condition codes
 	protected void executeImpl()
 	{
 		while(!shouldTerm)

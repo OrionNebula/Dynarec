@@ -15,6 +15,7 @@ import net.lotrek.dynarec.ClassGenerator.ConstPoolEntry;
 import net.lotrek.dynarec.ClassGenerator.ConstPoolProvider;
 import net.lotrek.dynarec.devices.InterruptController;
 import net.lotrek.dynarec.devices.KeyboardDevice;
+import net.lotrek.dynarec.devices.MouseDevice;
 import net.lotrek.dynarec.devices.VideoDevice;
 import net.lotrek.dynarec.execute.APPLEDRCx64;
 import net.lotrek.dynarec.execute.APPLEDRCx64.InstructionWriter;
@@ -47,7 +48,7 @@ public class DynarecTest
 			proc = (Processor) Class.forName(globalKeys.get("engine")).newInstance();
 		} catch (Exception e1) {
 			try {
-				proc = new APPLEDRCx64(Integer.parseInt(globalKeys.getOrDefault("ram", "1024")), globalKeys.containsKey("bios") ? MultiplexOutputStream.readFully(new FileInputStream(new File(globalKeys.get("bios"))), true) : new byte[0], new VideoDevice(), new InterruptController(), new KeyboardDevice());
+				proc = new APPLEDRCx64(Integer.parseInt(globalKeys.getOrDefault("ram", "1024")), globalKeys.containsKey("bios") ? MultiplexOutputStream.readFully(new FileInputStream(new File(globalKeys.get("bios"))), true) : new byte[0], new VideoDevice(), new InterruptController(), new KeyboardDevice(), new MouseDevice());
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}

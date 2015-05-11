@@ -145,19 +145,15 @@ public class AppleAdvAsm implements Assembler {
 		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
 		{
 			if(lines.get(ind).equals("#data"))
-			{
-				toAsm += dataPostfix;
-				dataPostfix = "";
-			}else if(lines.get(ind).contains("->"))
+				toAsm += dataPostfix + (dataPostfix = "");
+			else if(lines.get(ind).contains("->"))
 				toAsm += generateStructAccess(lines.get(ind));
 			else if(lines.get(ind).contains("<-"))
 				toAsm += generateStructSet(lines.get(ind));
 			else if(lines.get(ind).startsWith("goto"))
 				toAsm += String.format("64:B #%s, r0, r0, #0\n", lines.get(ind).replaceAll("goto\\s*", ""));
 			else if(lines.get(ind).equals("end"))
-			{
 				toAsm += loopTags.pop() + "\n";
-			}
 			else if(lines.get(ind).startsWith("if"))
 			{
 				if(!lines.get(ind).contains("goto"))

@@ -1,0 +1,60 @@
+Object file structure
+
+Primary Code
+------------
+
+[JumpInstruction][CodeLength][Code]
+//JumpInstruction is HLT if unexecutable
+
+Lambda Table
+-------------
+
+[LambdaCount]([CodeLength][Code])+
+
+Private Symbol Table
+--------------------
+
+[SymbolCount]([ValueLength][Value])+
+
+External Symbol Table
+------------
+[SymbolCount]([NameLength][SymbolName][ValueLength][Value])+
+
+----------------------------
+Compilation
+----------------------------
+Parsed in order
+#import directives are replaced with the .slh file in question -> intended to define external symbols
+Each .sls file compiled to one .slo file -> Symbol table constructed by combining .slo tables into one, merging duplicates -> only one of each record should have a non-null pointer
+-> private symbol table altered - references to symbols updated according to status during merge
+int main; pointer placed as Primary Code -> if non-executable, CodeLength is zero
+For lambda symbols -> 0 is primary code, 1 is first index
+
+---------------------------
+Test Case
+---------------------------
+
+//Test.sls
+	#import <stdio.slh>;
+	int test, main, five;
+	#export test, main;
+
+	main := () -> {
+		return test(5);
+	};
+
+	test := (int derp) -> {
+		return derp + (five += derp);
+	};
+
+ObjectFile
+----------
+
+//[JumpInstruction]     [CodeLength]                                [Code]
+  [64: B #4, r0, r0, #0][4:(Jump with Link, jump back to link) ∴ 16][...]
+//[LambdaCount]([CodeLength][Code])
+  [4:1]        ([CodeLength][Code])
+//[SymbolCount]([ValueLength][Value])
+  [4:1]        ([1:4]        [4:0]  )
+//[SymbolCount]([NameLength][SymbolName][ValueLength][Value])([NameLength][SymbolName][ValueLength][Value])
+  [4:2]        ([1:4]       ["test"]    [1:4]        [4:1]  )([1:4]       ["main"]    [1:4]        [4:0]  )

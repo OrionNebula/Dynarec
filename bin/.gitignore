@@ -1,8 +1,2 @@
 /net/
-/AdvDisplayBlock.asm
-/CharDisp.asm
-/InterruptController.asm
-/InterruptDisp.asm
-/TypingTest.asm
-/OldAsm/
 /NewAsm/

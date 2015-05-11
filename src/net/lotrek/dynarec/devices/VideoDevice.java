@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.lwjgl.LWJGLException;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
@@ -57,6 +58,8 @@ public class VideoDevice extends MemorySpaceDevice
 						Register[] str = pixelStructure.getInstance(instAddr + 4 + i * pixelStructure.getLength(), this.getProcessor().getMemory());
 						
 						int x = (byte) str[2].getValue(), y = (byte) str[3].getValue();
+						
+//						System.out.printf("x: %d; y: %d; data: %s;\n", x, y, "" + (char)(int)str[1].getValue());
 						if((byte)str[0].getValue() == 0)
 							screenText[y][x] = (char)(int)str[1].getValue();
 						if((byte)str[0].getValue() == 1)
@@ -95,7 +98,8 @@ public class VideoDevice extends MemorySpaceDevice
 			
 			if(Display.isCloseRequested())
 				Display.destroy();
-		}
+		}else
+			System.exit(0);
 	}
 
 	public void initializeDevice()
@@ -109,6 +113,7 @@ public class VideoDevice extends MemorySpaceDevice
 			Display.setTitle(String.format("%s VideoDevice; %d bytes of memory; %d bytes usable", this.getProcessor().getClass().getSimpleName(), this.getProcessor().getMemorySize(), this.getProcessor().getAvailableMemory()));
 			Display.setDisplayMode(new DisplayMode(INITAL_WIDTH, INITIAL_HEIGHT));
 			Display.create();
+			Mouse.setGrabbed(true);
 			font = new TrueTypeFont(Font.createFont(Font.TRUETYPE_FONT, new FileInputStream(new File("./res/Perfect DOS VGA 437 Win.ttf"))).deriveFont(Font.PLAIN, Display.getHeight() / 32), false);
 			glEnable(GL_TEXTURE_2D);
 			glEnable(GL_BLEND);
