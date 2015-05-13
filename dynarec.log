@@ -1,14 +1,15 @@
-[2015/05/11 18:17:35:129 AppleAdvAsm.assemble(AppleAdvAsm.java:66)] Encountered section defines
-[2015/05/11 18:17:35:132 AppleAdvAsm.generateDefines(AppleAdvAsm.java:129)] Defined structure VideoDevice with content [byte status, int width, int height, int instAddr]
-[2015/05/11 18:17:35:133 AppleAdvAsm.generateDefines(AppleAdvAsm.java:129)] Defined structure IntCtrl with content [byte status, byte command, int toMonitor, byte regionLength]
-[2015/05/11 18:17:35:134 AppleAdvAsm.generateDefines(AppleAdvAsm.java:129)] Defined structure Keyboard with content [byte swap, byte busy, int bufferLen, int readLen, int addr]
-[2015/05/11 18:17:35:135 AppleAdvAsm.generateDefines(AppleAdvAsm.java:129)] Defined structure GraphicsCommand with content [byte mode, int data, byte x, byte y]
-[2015/05/11 18:17:35:136 AppleAdvAsm.generateDefines(AppleAdvAsm.java:129)] Defined structure MouseDevice with content [byte status, int x, int y]
-[2015/05/11 18:17:35:137 AppleAdvAsm.generateDefines(AppleAdvAsm.java:129)] Defined structure Keystroke with content [byte key, byte char]
-[2015/05/11 18:17:35:137 AppleAdvAsm.assemble(AppleAdvAsm.java:66)] Encountered section data
-[2015/05/11 18:17:35:138 AppleAdvAsm.generateData(AppleAdvAsm.java:101)] Defined variable oldX with type int
-[2015/05/11 18:17:35:139 AppleAdvAsm.generateData(AppleAdvAsm.java:101)] Defined variable oldY with type int
-[2015/05/11 18:17:35:139 AppleAdvAsm.generateData(AppleAdvAsm.java:101)] Defined variable graphLen with type int
-[2015/05/11 18:17:35:140 AppleAdvAsm.generateData(AppleAdvAsm.java:101)] Defined variable com with type GraphicsCommand
-[2015/05/11 18:17:35:141 AppleAdvAsm.generateData(AppleAdvAsm.java:101)] Defined variable key with type Keystroke
-[2015/05/11 18:17:35:207 AppleAdvAsm.assemble(AppleAdvAsm.java:66)] Encountered section text
+[2015/05/12 17:17:03:66 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateDefines(AppleAdvAsm.java:130)] Defined structure VideoDevice with content [byte status, int width, int height, int instAddr]
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateDefines(AppleAdvAsm.java:130)] Defined structure IntCtrl with content [byte status, byte command, int toMonitor, byte regionLength]
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateDefines(AppleAdvAsm.java:130)] Defined structure Keyboard with content [byte swap, byte busy, int bufferLen, int readLen, int addr]
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateDefines(AppleAdvAsm.java:130)] Defined structure GraphicsCommand with content [byte mode, int data, byte x, byte y]
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateDefines(AppleAdvAsm.java:130)] Defined structure MouseDevice with content [byte status, int x, int y]
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateDefines(AppleAdvAsm.java:130)] Defined structure Keystroke with content [byte key, byte char]
+[2015/05/12 17:17:03:66 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable returnStack with type int
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable returnData with type int[20]
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testStack with type int
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testData with type byte[256]
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable comPtr with type int
+[2015/05/12 17:17:03:66 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable com with type GraphicsCommand
+[2015/05/12 17:17:03:128 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text

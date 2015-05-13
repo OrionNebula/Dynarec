@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Stack;
@@ -144,168 +145,173 @@ public class AppleAdvAsm implements Assembler {
 		String toAsm = "";
 		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
 		{
-			if(lines.get(ind).equals("#data"))
-				toAsm += dataPostfix + (dataPostfix = "");
-			else if(lines.get(ind).contains("->"))
-				toAsm += generateStructAccess(lines.get(ind));
-			else if(lines.get(ind).contains("<-"))
-				toAsm += generateStructSet(lines.get(ind));
-			else if(lines.get(ind).startsWith("goto"))
-				toAsm += String.format("64:B #%s, r0, r0, #0\n", lines.get(ind).replaceAll("goto\\s*", ""));
-			else if(lines.get(ind).equals("end"))
-				toAsm += loopTags.pop() + "\n";
-			else if(lines.get(ind).startsWith("if"))
-			{
-				if(!lines.get(ind).contains("goto"))
+			try {
+				if(lines.get(ind).equals("#data"))
+					toAsm += dataPostfix + (dataPostfix = "");
+				else if(lines.get(ind).contains("->"))
+					toAsm += generateStructAccess(lines.get(ind));
+				else if(lines.get(ind).contains("<-"))
+					toAsm += generateStructSet(lines.get(ind));
+				else if(lines.get(ind).startsWith("goto"))
+					toAsm += String.format("64:B #%s, r0, r0, #0\n", lines.get(ind).replaceAll("goto\\s*", ""));
+				else if(lines.get(ind).equals("end"))
+					toAsm += loopTags.pop() + "\n";
+				else if(lines.get(ind).startsWith("if"))
 				{
-					String lbl = String.format(":L%dL:", loopLabel++);
-					loopTags.push(lbl);
+					if(!lines.get(ind).contains("goto"))
+					{
+						String lbl = String.format(":L%dL:", loopLabel++);
+						loopTags.push(lbl);
+						
+						String arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("if.*\\(|\\).*", ""),
+								arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("if.*\\(|\\).*", ""),
+								op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|if.*\\(|\\).*", arg1, arg2), "");
+						
+						toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);;
+						
+						switch(op)
+						{
+						case "!=":
+							toAsm += "#3\n";
+							break;
+						case "<=":
+							toAsm += "#4\n";
+							break;
+						case ">=":
+							toAsm += "#2\n";
+							break;
+						case "<":
+							toAsm += "#6\n";
+							break;
+						case ">":
+							toAsm += "#5\n";
+							break;
+						case "=":
+							toAsm += "#1\n";
+							break;
+						default:
+							throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"^%s\"", op));
+						}
+						ind++;
+						continue;
+					}
 					
-					String arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("if.*\\(|\\).*", ""),
+					if(lines.get(ind).replaceAll("if.*\\(", "").replaceAll("\\).*", "").equals("true"))
+					{
+						toAsm += String.format("64:B #%s, r0, r0, #0\n", lines.get(ind).replaceAll("\\s", "").split("goto")[1].trim());
+						ind++;
+						continue;
+					}
+					
+					String lbl = lines.get(ind).replaceAll("\\s", "").split("goto")[1].trim(),
+							arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("if.*\\(|\\).*", ""),
 							arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("if.*\\(|\\).*", ""),
 							op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|if.*\\(|\\).*", arg1, arg2), "");
 					
-					toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);;
+					toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);
 					
 					switch(op)
 					{
 					case "!=":
-						toAsm += "#3\n";
+						toAsm += "#1\n";
 						break;
 					case "<=":
-						toAsm += "#4\n";
-						break;
-					case ">=":
-						toAsm += "#2\n";
-						break;
-					case "<":
-						toAsm += "#6\n";
-						break;
-					case ">":
 						toAsm += "#5\n";
 						break;
+					case ">=":
+						toAsm += "#6\n";
+						break;
+					case "<":
+						toAsm += "#2\n";
+						break;
+					case ">":
+						toAsm += "#4\n";
+						break;
 					case "=":
+						toAsm += "#3\n";
+						break;
+					default:
+						System.out.printf("%s %s %s\n", arg1, op, arg2);
+						throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"%s\"", op));
+					}
+				}
+				else if(lines.get(ind).equals("do"))
+				{
+					String lbl = String.format(":L%dL:", loopLabel++);
+					toAsm += lbl + "\n";
+					loopTags.push(lbl);
+				}else if(lines.get(ind).replaceAll("\\s", "").startsWith("while("))
+				{
+					if(loopTags.isEmpty())
+						throw new RuntimeException("Assembly failed: orphaned \"while\"");
+					
+					if(lines.get(ind).replaceAll("while.*\\(", "").replaceAll("\\).*", "").equals("true"))
+					{
+						toAsm += String.format("64:B #%s, r0, r0, #0\n", loopTags.pop());
+						ind++;
+						continue;
+					}
+					
+					String lbl = loopTags.pop(),
+							arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("while.*\\(|\\).*", ""),
+							arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("while.*\\(|\\).*", ""),
+							op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|while.*\\(|\\).*", arg1, arg2), "");
+					
+					toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);
+					
+					switch(op)
+					{
+					case "!=":
 						toAsm += "#1\n";
+						break;
+					case "<=":
+						toAsm += "#5\n";
+						break;
+					case ">=":
+						toAsm += "#6\n";
+						break;
+					case "<":
+						toAsm += "#2\n";
+						break;
+					case ">":
+						toAsm += "#4\n";
+						break;
+					case "=":
+						toAsm += "#3\n";
 						break;
 					default:
 						throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"^%s\"", op));
 					}
-					ind++;
-					continue;
 				}
-				
-				if(lines.get(ind).replaceAll("if.*\\(", "").replaceAll("\\).*", "").equals("true"))
+				else
 				{
-					toAsm += String.format("64:B #%s, r0, r0, #0\n", lines.get(ind).replaceAll("\\s", "").split("goto")[1].trim());
-					ind++;
-					continue;
-				}
-				
-				String lbl = lines.get(ind).replaceAll("\\s", "").split("goto")[1].trim(),
-						arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("if.*\\(|\\).*", ""),
-						arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("if.*\\(|\\).*", ""),
-						op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|if.*\\(|\\).*", arg1, arg2), "");
-				
-				toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);
-				
-				switch(op)
-				{
-				case "!=":
-					toAsm += "#1\n";
-					break;
-				case "<=":
-					toAsm += "#5\n";
-					break;
-				case ">=":
-					toAsm += "#6\n";
-					break;
-				case "<":
-					toAsm += "#2\n";
-					break;
-				case ">":
-					toAsm += "#4\n";
-					break;
-				case "=":
-					toAsm += "#3\n";
-					break;
-				default:
-					System.out.printf("%s %s %s\n", arg1, op, arg2);
-					throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"%s\"", op));
-				}
-			}
-			else if(lines.get(ind).equals("do"))
-			{
-				String lbl = String.format(":L%dL:", loopLabel++);
-				toAsm += lbl + "\n";
-				loopTags.push(lbl);
-			}else if(lines.get(ind).replaceAll("\\s", "").startsWith("while("))
-			{
-				if(loopTags.isEmpty())
-					throw new RuntimeException("Assembly failed: orphaned \"while\"");
-				
-				if(lines.get(ind).replaceAll("while.*\\(", "").replaceAll("\\).*", "").equals("true"))
-				{
-					toAsm += String.format("64:B #%s, r0, r0, #0\n", loopTags.pop());
-					ind++;
-					continue;
-				}
-				
-				String lbl = loopTags.pop(),
-						arg1 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[0].replaceAll("while.*\\(|\\).*", ""),
-						arg2 = lines.get(ind).replaceAll("\\s", "").split("!=|<=|>=|<|>|=")[1].replaceAll("while.*\\(|\\).*", ""),
-						op = lines.get(ind).replaceAll(String.format("\\s|%s|%s|while.*\\(|\\).*", arg1, arg2), "");
-				
-				toAsm += String.format("64:B #%s, %s, %s,", lbl, arg1, arg2);
-				
-				switch(op)
-				{
-				case "!=":
-					toAsm += "#1\n";
-					break;
-				case "<=":
-					toAsm += "#5\n";
-					break;
-				case ">=":
-					toAsm += "#6\n";
-					break;
-				case "<":
-					toAsm += "#2\n";
-					break;
-				case ">":
-					toAsm += "#4\n";
-					break;
-				case "=":
-					toAsm += "#3\n";
-					break;
-				default:
-					throw new RuntimeException(String.format("Assembly failed: Invalid comparison operator \"^%s\"", op));
-				}
-			}
-			else
-			{
-				String line = lines.get(ind);
-				
-				if(line.matches(".*sizeof\\(.*\\).*"))
-				{
-					String type = line.substring(line.indexOf("sizeof(") + "sizeof(".length(), line.indexOf(")"));
-					line = line.replace(String.format("sizeof(%s)", type), "" + getTypeLength(type));
-				}
-				
-				if(line.matches(".*0x[0-9A-Fa-f]{1,8}.*"))
-				{
-					Matcher hex = Pattern.compile("0x[0-9A-Fa-f]{1,8}").matcher(line);
+					String line = lines.get(ind);
 					
-					while(hex.find())
+					if(line.matches(".*sizeof\\(.*\\).*"))
 					{
-						String num = hex.group();
-						line = line.replace(num, "" + Integer.parseInt(num.substring(2), 16));
+						String type = line.substring(line.indexOf("sizeof(") + "sizeof(".length(), line.indexOf(")"));
+						line = line.replace(String.format("sizeof(%s)", type), "" + getTypeLength(type));
 					}
+					
+					if(line.matches(".*0x[0-9A-Fa-f]{1,8}.*"))
+					{
+						Matcher hex = Pattern.compile("0x[0-9A-Fa-f]{1,8}").matcher(line);
+						
+						while(hex.find())
+						{
+							String num = hex.group();
+							line = line.replace(num, "" + Integer.parseInt(num.substring(2), 16));
+						}
+					}
+					
+					for (AsmStruct struct : defines.values())
+						line = line.replace("sizeof(" + struct.name + ")", "" + struct.getLength(defines));
+					
+					toAsm += line + "\n";
 				}
-				
-				for (AsmStruct struct : defines.values())
-					line = line.replace("sizeof(" + struct.name + ")", "" + struct.getLength(defines));
-				
-				toAsm += line + "\n";
+			} catch (Exception e) {
+				System.out.printf("Error at line \"%s\"\n", lines.get(ind));
+				e.printStackTrace();
 			}
 			
 			ind++;
@@ -391,8 +397,6 @@ public class AppleAdvAsm implements Assembler {
 		
 		return ind - indO;
 	}
-	
-	//TODO: use * to store pointers rather than values
 	
 	private String generateStructSet(String desc)
 	{
@@ -991,7 +995,12 @@ public class AppleAdvAsm implements Assembler {
 		
 		public void assemble(String[] line, int header, DataOutputStream dos, boolean is64) throws IOException
 		{
-			asm.assemble(line, header, dos, is64);
+			try {
+				asm.assemble(line, header, dos, is64);
+			} catch (Exception e) {
+				System.out.println("Error: " + Arrays.toString(line));
+				e.printStackTrace();
+			}
 		}
 		
 		public int getId()

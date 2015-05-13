@@ -1217,6 +1217,7 @@ int len = 1;
 		return 6;
 	}
 	
+	//value, addr
 	private int writeByteToMemory(ClassGenerator gen)
 	{
 		setStackVarSize(8, 4);
