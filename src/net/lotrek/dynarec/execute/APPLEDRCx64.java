@@ -8,6 +8,7 @@ import java.awt.GridLayout;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -793,6 +794,9 @@ int len = 1;
 
 	protected void executeImpl()
 	{
+		for(long[] reg : registers)
+			reg[1] = this.getMemorySize();
+		
 		while(!shouldTerm)
 		{
 			int addr = (int) getRegisters()[PC];

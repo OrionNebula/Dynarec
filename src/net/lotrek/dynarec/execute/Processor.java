@@ -2,6 +2,7 @@ package net.lotrek.dynarec.execute;
 
 import javax.swing.JPanel;
 
+import net.lotrek.dynarec.devices.DirectoryDevice;
 import net.lotrek.dynarec.devices.MemorySpaceDevice;
 
 public abstract class Processor
@@ -22,9 +23,11 @@ public abstract class Processor
 	public Processor(int memorySize, byte[] biosImage, MemorySpaceDevice...memorySpaceDevices)
 	{
 		memory = new byte[memorySize];
-		devices = memorySpaceDevices;
+		devices = new MemorySpaceDevice[1 + memorySpaceDevices.length];//memorySpaceDevices;
+		System.arraycopy(memorySpaceDevices, 0, devices, 1, memorySpaceDevices.length);
+		devices[0] = new DirectoryDevice();
 		
-		for (MemorySpaceDevice memorySpaceDevice : memorySpaceDevices)
+		for (MemorySpaceDevice memorySpaceDevice : devices)
 		{
 			memorySpaceDevice.setOccupationAddr(memorySize - (lastAllocationOffset += memorySpaceDevice.getOccupationLength()));
 			memorySpaceDevice.setProcessor(this);
@@ -65,6 +68,16 @@ public abstract class Processor
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public final int getMemoryDeviceCount()
+	{
+		return devices.length;
+	}
+	
+	public final MemorySpaceDevice getMemoryDevice(int id)
+	{
+		return devices[id];
 	}
 	
 	protected abstract void terminateImpl();

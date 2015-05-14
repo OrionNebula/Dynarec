@@ -43,17 +43,20 @@
 		int monitorAddr
 	}
 #mode data
+	int memSize
 	IVT ivtTable
 	int graphLen
 	GraphicsCommand com
 	byte keyLen
 	Keystroke strokePointer
 #mode text
+		MOV r3, r1
+		memSize <- r3
+
 		ivtTable* -> r12
 		ADD r2, r15, #:keyInterrupt:
 		ivtTable.monitorAddr <- r2
 
-		64: MOV r3, #1000000
 		SUB r3, r3, #sizeof(VideoDevice)
 		SUB r3, r3, #sizeof(IntCtrl)
 		SUB r2, r3, #sizeof(Keyboard)
@@ -65,7 +68,7 @@
 
 	HLT
 	:keyInterrupt:
-		64: MOV r2, #1000000
+		memSize -> r2
 		SUB r2, r2, #sizeof(VideoDevice)
 
 		graphLen* -> r3
@@ -109,7 +112,7 @@
 
 			MOV r7, #1
 			graphLen <- r7
-			64: MOV r2, #1000000
+			memSize -> r2
 			SUB r2, r2, #sizeof(VideoDevice)
 			VideoDevice[r2].status <- r7
 

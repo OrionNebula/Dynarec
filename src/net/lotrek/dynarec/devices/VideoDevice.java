@@ -5,6 +5,7 @@ import java.awt.FontFormatException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Mouse;
@@ -59,7 +60,7 @@ public class VideoDevice extends MemorySpaceDevice
 						
 						int x = (byte) str[2].getValue(), y = (byte) str[3].getValue();
 						
-//						System.out.printf("x: %d; y: %d; data: %s;\n", x, y, "" + (char)(int)str[1].getValue());
+						System.out.printf("x: %d; y: %d; data: %s;\n", x, y, "" + (char)(int)str[1].getValue());
 						if((byte)str[0].getValue() == 0)
 							screenText[y][x] = (char)(int)str[1].getValue();
 						if((byte)str[0].getValue() == 1)
@@ -124,6 +125,8 @@ public class VideoDevice extends MemorySpaceDevice
 		} catch (LWJGLException | FontFormatException | IOException e) {
 			e.printStackTrace();
 		}
+		
+		System.out.println("Video Device initialized");
 	}
 
 }

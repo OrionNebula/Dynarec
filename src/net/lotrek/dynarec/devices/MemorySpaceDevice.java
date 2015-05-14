@@ -7,6 +7,11 @@ public abstract class MemorySpaceDevice
 	private Processor proc;
 	private int occupationStart = -1;
 	
+	public MemorySpaceDevice()
+	{
+		System.out.println("Created device \"" + this.getClass().getSimpleName() + "\" with hashcode " + this.hashCode());
+	}
+	
 	public void setProcessor(Processor proc)
 	{
 		this.proc = proc;
@@ -25,6 +30,11 @@ public abstract class MemorySpaceDevice
 	public int getOccupationAddr()
 	{
 		return occupationStart;
+	}
+	
+	public final int hashCode()
+	{
+		return this.getClass().getName().hashCode();
 	}
 	
 	public abstract int getOccupationLength();

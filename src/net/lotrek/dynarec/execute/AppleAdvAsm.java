@@ -300,7 +300,7 @@ public class AppleAdvAsm implements Assembler {
 						while(hex.find())
 						{
 							String num = hex.group();
-							line = line.replace(num, "" + Integer.parseInt(num.substring(2), 16));
+							line = line.replace(num, "" + Integer.parseUnsignedInt(num.substring(2), 16));
 						}
 					}
 					
@@ -333,7 +333,7 @@ public class AppleAdvAsm implements Assembler {
 				continue;
 			}
 			
-			if(line.matches("\\[\\d\\]"))
+			if(line.matches("\\[\\d+\\]"))
 			{
 				off += Integer.parseInt(line.replaceAll("\\[|\\]", ""));
 				continue;
@@ -351,7 +351,7 @@ public class AppleAdvAsm implements Assembler {
 			
 			line = line.toUpperCase().replace(",", " ").replaceAll(" +", " ");
 			
-			if(line.matches("\\[\\d\\]"))
+			if(line.matches("\\[\\d+\\]"))
 			{
 				dos.write(new byte[Integer.parseInt(line.replaceAll("\\[|\\]", ""))]);
 				globOff += Integer.parseInt(line.replaceAll("\\[|\\]", ""));
@@ -405,11 +405,10 @@ public class AppleAdvAsm implements Assembler {
 		String resReg = desc.split("<\\-")[1].trim();
 		
 		//variable
-		if(variables.containsKey(desc.split("<\\-")[0].trim().split("\\[|\\.")[0]))
+		if(variables.containsKey(desc.split("<\\-")[0].trim().split("\\[|\\.")[0].replace("&", "")))
 		{
-			String name = desc.split("<\\-")[0].trim().split("\\[|\\.")[0], type = variables.get(name);
+			String name = desc.split("<\\-")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("&", ""));
 			String toRender = " <- " + resReg;
-			
 			
 			if(type.contains("["))
 			{
@@ -423,12 +422,20 @@ public class AppleAdvAsm implements Assembler {
 				return String.format("ADD r0, r15, #:V%sV:\nADD r0, r0, #%d\n", name, lenOffset) + generateStructSet(toRender);
 			}else
 			{
+				boolean isRef = desc.contains("&");
+				
+				if(isRef)
+					name = name.replace("&", "");
+				
 				if(defines.containsKey(type))
 					toRender = String.format("%s[r0].%s", type, desc.split("\\.")[1]) + toRender;
 				else
 					toRender = String.format("L@%s[r0].value", type) + toRender;
 				
-				return String.format("ADD r0, r15, #:V%sV:\n", name) + generateStructSet(toRender);
+//				System.out.println(desc);
+//				System.out.println((isRef?"":String.format("ADD r0, r15, #:V%sV:\n", name)) + (isRef ? generateStructAccess(name + " -> r0") : "") + generateStructSet(toRender));
+				
+				return (isRef?"":String.format("ADD r0, r15, #:V%sV:\n", name)) + (isRef ? generateStructAccess(name + " -> r0") : "") + generateStructSet(toRender);
 			}
 		}
 		
@@ -513,9 +520,9 @@ public class AppleAdvAsm implements Assembler {
 		String resReg = desc.split("\\->")[1].trim();
 		
 		//variable
-		if(variables.containsKey(desc.split("\\->")[0].trim().split("\\[|\\.")[0].replace("*", "")))
+		if(variables.containsKey(desc.split("\\->")[0].trim().split("\\[|\\.")[0].replace("*", "").replace("&", "")))
 		{
-			String name = desc.split("\\->")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("*", ""));
+			String name = desc.split("\\->")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("*", "").replace("&", ""));
 			String toRender = " -> " + resReg;
 			
 			if(type.contains("[") && !name.contains("*"))
@@ -531,19 +538,23 @@ public class AppleAdvAsm implements Assembler {
 			}else
 			{
 				String addrReg = "r0";
-				boolean isPointer = name.contains("*");
+				boolean isPointer = name.contains("*"), isRef = name.contains("&");
 				if(isPointer)
 				{
 					name = name.replace("*", "");
 					addrReg = resReg;
-				}
+				}else if(isRef)
+					name = name.replace("&", "");
 				
 				if(defines.containsKey(type) && !isPointer)
 					toRender = String.format("%s[r0].%s", type, desc.split("\\.")[1]) + toRender;
 				else
-					toRender = String.format("L@%s[r0].value", type) + toRender;
+					toRender = String.format("L@%s[%s].value", type, isRef ? addrReg : "r0") + toRender;
 				
-				return String.format("ADD %s, r15, #:V%sV:\n", addrReg, name) + (isPointer ? "" : generateStructAccess(toRender));
+//				System.out.println(desc);
+//				System.out.println(String.format("ADD %s, r15, #:V%sV:\n", addrReg, name) + (!isRef ? "" : generateStructAccess(name + " -> r0")) + (isPointer && !isRef ? "" : generateStructAccess(toRender)));
+				
+				return String.format("ADD %s, r15, #:V%sV:\n", addrReg, name) + (!isRef ? "" : generateStructAccess(name + " -> r0")) + (isPointer && !isRef ? "" : generateStructAccess(toRender));
 			}
 		}
 		
@@ -624,7 +635,7 @@ public class AppleAdvAsm implements Assembler {
 	{
 		if(type.matches(".*\\[.*\\]"))
 		{
-			if(type.matches(".*\\[\\]"))
+			if(!type.matches(".*\\[\\d+\\]"))
 				return 0;
 			return getTypeLength(type.split("\\[")[0])*Integer.parseInt(type.split("\\[|\\]")[1]);
 		}

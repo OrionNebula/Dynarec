@@ -45,13 +45,15 @@
 		byte char
 	}
 #mode data
+	int memSize
+
 	int oldX
 	int oldY
 	int graphLen
 	GraphicsCommand com
 	Keystroke key
 #mode text
-	MOV r1, #1024
+	memSize <- r1
 	SUB r1, r1, #sizeof(VideoDevice)
 
 	MOV r2, #1

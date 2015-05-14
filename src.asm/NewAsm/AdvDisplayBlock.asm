@@ -36,11 +36,11 @@
 	}
 
 #mode data
+	int memSize
 	int len
 	GraphicsCommand[0] com
 #mode text
-	
-	MOV r1, #20480
+	memSize <- r1
 	SUB r1, r1, #sizeof(VideoDevice)
 	
 	MOV r4, #0
