@@ -21,7 +21,7 @@ public class VideoDevice extends MemorySpaceDevice
 {
 	public static final int RENDER_TEXT = 0, RENDER_RAW = 1, INITAL_WIDTH = 1280, INITIAL_HEIGHT = 960;
 	
-	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class), pixelStructure = new Structure(Byte.class, Integer.class, Byte.class, Byte.class);
+	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class), pixelStructure = new Structure(Byte.class, Integer.class, Byte.class, Byte.class), queryStructure = new Structure(Byte.class, Integer.class);
 	private Register[] instanceRegisters;
 	private TrueTypeFont font;
 	private int renderMode;
@@ -60,11 +60,17 @@ public class VideoDevice extends MemorySpaceDevice
 						
 						int x = (byte) str[2].getValue(), y = (byte) str[3].getValue();
 						
-						System.out.printf("x: %d; y: %d; data: %s;\n", x, y, "" + (char)(int)str[1].getValue());
+//						System.out.printf("x: %d; y: %d; data: %s;\n", x, y, "" + (char)(int)str[1].getValue());
 						if((byte)str[0].getValue() == 0)
 							screenText[y][x] = (char)(int)str[1].getValue();
 						if((byte)str[0].getValue() == 1)
 							screenColors[y][x] = new Color((int)str[1].getValue());
+						if((byte)str[0].getValue() == 2)
+						{
+							Register[] pix = queryStructure.getInstance(str[1].getValue(Integer.class), this.getProcessor().getMemory());
+							pix[0].setValue(Byte.class, (byte)0);
+							pix[1].setValue(Integer.class, screenColors[x][y] == null ? 0xffffff : (screenColors[x][y].getAlphaByte() << 24) | (screenColors[x][y].getRedByte() << 16) | (screenColors[x][y].getGreenByte() << 8) | screenColors[x][y].getBlueByte());
+						}
 					}
 				}
 				

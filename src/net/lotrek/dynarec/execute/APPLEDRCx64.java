@@ -303,7 +303,7 @@ public class APPLEDRCx64 extends Processor
 			return len;
 		},
 		(linst, gen) -> { //DMUL
-int len = 1;
+			int len = 1;
 			
 			len += loadRegisterBytecode(gen, (int)(linst >> 36) & 0xf);
 			len += getDoubleFromLong(gen);
@@ -330,7 +330,9 @@ int len = 1;
 		(linst, gen) -> { //DDIV
 			int len = 1;
 			
-			len += loadRegisterBytecode(gen, (int)(linst >> 36) & 0xf);
+			//System.out.println("DDIV op1: " + ((int)(linst >> 48) & 0xf));
+			
+			len += loadRegisterBytecode(gen, (int)(linst >> 48) & 0xf);
 			len += getDoubleFromLong(gen);
 			
 			if(((linst >> 32) & 1) == 1)
@@ -697,6 +699,34 @@ int len = 1;
 			gen.addBytecode(Bytecode.lastore);
 			
 			gen.addBytecode(Bytecode.areturn);
+			
+			return len;
+		},
+		(linst, gen) -> { //DLN
+			int len = 1;
+			
+			//System.out.println("DDIV op1: " + ((int)(linst >> 48) & 0xf));
+			
+			//len += loadRegisterBytecode(gen, (int)(linst >> 48) & 0xf);
+			//len += getDoubleFromLong(gen);
+			
+			if(((linst >> 32) & 1) == 1)
+			{
+				len += loadRegisterBytecode(gen, (int)(linst & 0xf));
+				len += getDoubleFromLong(gen);
+			}
+			else
+			{
+				len += 3;
+				int ind = getConstant(gen, "D" + (double)Float.intBitsToFloat((int)(linst & 0xffffffffl)), ConstPoolEntry.CONSTANT_Double, (double)Float.intBitsToFloat((int)(linst & 0xffffffffl)));
+				gen.addBytecode(Bytecode.ldc2_w, ind >> 8, ind & 0xff);
+			}
+			
+			int ind = getConstant(gen, "log METHOD", ConstPoolEntry.CONSTANT_FieldMethodInterfaceMethodref, 10, getConstant(gen, "java/lang/Math CLASS", ConstPoolEntry.CONSTANT_Class, getConstant(gen, "java/lang/Math", ConstPoolEntry.CONSTANT_Utf8, "java/lang/Math")), getConstant(gen, "log NAMETYPE", ConstPoolEntry.CONSTANT_NameAndType, getConstant(gen, "log", ConstPoolEntry.CONSTANT_Utf8, "log"), getConstant(gen, "(D)D", ConstPoolEntry.CONSTANT_Utf8, "(D)D")));
+			gen.addBytecode(Bytecode.invokestatic, 0, ind);
+			
+			len += getLongFromDouble(gen);
+			len += setRegisterFromStackBytecode(gen, (int)((linst >> 40) & 0xf));
 			
 			return len;
 		},
