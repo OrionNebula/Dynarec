@@ -50,18 +50,27 @@
 
 	MouseDevice
 	{
-		byte status
 		int x
 		int y
 	}
+
+	RTCDevice
+	{
+		byte id
+		byte command
+		int period
+	}
+
 	;Custom Structures
 	IVT
 	{
 		int monitorPtr
+		int rtcPtr
 	}
 
 	LightCycle
 	{
+		byte hasCrashed
 		byte x
 		byte y
 		byte heading
@@ -73,6 +82,8 @@
 		int vidAddr
 		int intAddr
 		int keyAddr
+		int mouseAddr
+		int rtcAddr
 	}
 
 	Keystroke
@@ -100,12 +111,16 @@
 	Keystroke key
 
 	LightCycle player
-	LightCycle enemy
+	byte numCycles
+	LightCycle[5] enemies
 
 	IVT intTbl
 
 	byte testX
 	byte testY
+
+	long randState
+	int genRand
 
 	;stores total memory size
 	int memSize
@@ -114,6 +129,9 @@
 	int mod1
 	;mod2, used as a render temp storage
 	int mod2
+
+	byte iter
+	byte totCrashed
 
 	;Method call return pointer stack
 	int stackPtr
@@ -126,8 +144,10 @@
 	memSize <- r1
 
 	intTbl* -> r12
-	ADD r1, r15, #:updatePlayerCycle:
+	64: ADD r1, r15, #:updatePlayerCycle:
 	intTbl.monitorPtr <- r1
+	64: ADD r1, r15, #:gameTick:
+	intTbl.rtcPtr <- r1
 
 	;setup stack pointer
 	stackPtr* -> r1
@@ -140,6 +160,15 @@
 	stackPtr& <- r1
 	goto :loadDeviceDescriptors:
 	:ret7:
+
+	addr.mouseAddr -> r1
+	MOV r4, #0
+	do
+		MouseDevice[r1].x -> r2
+		MouseDevice[r1].y -> r3
+		XOR r2, r2, r3
+	while(r4 = r2)
+	randState <- r2
 
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)
@@ -155,56 +184,89 @@
 	player.y <- r1
 	MOV r1, #2
 	player.heading <- r1
-	64: MOV r1, #0xFBBD2C
+	64: MOV r1, #0x0051FF
 	player.color <- r1
 
-	MOV r1, #57
-	enemy.x <- r1
-	MOV r1, #16
-	enemy.y <- r1
-	MOV r1, #3
-	enemy.heading <- r1
-	64: MOV r1, #0x0051FF
-	enemy.color <- r1
+	MOV r1, #4
+	MOV r5, #0
+	numCycles <- r1
+	do
+		MUL r1, r5, #sizeof(LightCycle)
+		enemies* -> r2
+		ADD r1, r2, r1
+		mod1 <- r1
+
+		stackPtr -> r1
+		ADD r1, r1, #sizeof(int)
+		stackPtr <- r1
+		ADD r1, r15, #:retes:
+		stackPtr& <- r1
+		goto :initEnemyCycle:
+		:retes:
+
+		ADD r5, r5, #1
+		numCycles -> r1
+	while(r5 != r1)
 
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)
 	stackPtr <- r1
-	ADD r1, r15, #:ret8:
+	ADD r1, r15, #:retsp:
 	stackPtr& <- r1
-	enemy* -> r1
+	player* -> r1
 	mod1 <- r1
-	goto :renderLightCycle:
-	:ret8:
+	goto :initPlayerCycle:
+	:retsp:
 
+	addr.rtcAddr -> r1
+
+	MOV r2, #75
+	RTCDevice[r1].period <- r2
+	MOV r2, #1
+	RTCDevice[r1].id <- r2
+
+	HLT
+:gameTick:
+	MOV r5, #0
+	iter <- r5
 	do
-		;RTC
-		64: MOV r1, #30000
-		MOV r2, #0
-		do
-			ADD r2, r2, #1
-		while(r2 != r1)
-
-		stackPtr -> r1
-		ADD r1, r1, #sizeof(int)
-		stackPtr <- r1
-		ADD r1, r15, #:retai:
-		stackPtr& <- r1
-		enemy* -> r1
+		iter -> r5
+		MUL r1, r5, #sizeof(LightCycle)
+		enemies* -> r2
+		ADD r1, r2, r1
 		mod1 <- r1
-		goto :runAITick:
-		:retai:
 
-		stackPtr -> r1
-		ADD r1, r1, #sizeof(int)
-		stackPtr <- r1
-		ADD r1, r15, #:rete:
-		stackPtr& <- r1
-		enemy* -> r1
-		mod1 <- r1
-		goto :moveLightCycle:
-		:rete:
+		MOV r2, #1
+		LightCycle[r1].hasCrashed -> r1
+		if(r1 != r2)
 
+			stackPtr -> r1
+			ADD r1, r1, #sizeof(int)
+			stackPtr <- r1
+			ADD r1, r15, #:retaes:
+			stackPtr& <- r1
+			goto :runAITick:
+			:retaes:
+
+			stackPtr -> r1
+			ADD r1, r1, #sizeof(int)
+			stackPtr <- r1
+			ADD r1, r15, #:rete:
+			stackPtr& <- r1
+			goto :moveLightCycle:
+			:rete:
+
+		end
+
+		iter -> r5
+		ADD r5, r5, #1
+		iter <- r5
+		numCycles -> r1
+	while(r5 != r1)
+
+	player.hasCrashed -> r1
+	MOV r2, #1
+	if(r2 != r1)
 		stackPtr -> r1
 		ADD r1, r1, #sizeof(int)
 		stackPtr <- r1
@@ -214,9 +276,9 @@
 		mod1 <- r1
 		goto :moveLightCycle:
 		:retp:
-	while(r0 = r0)
+	end
 
-	HLT
+	RET
 :setupKeyboardInterrupt:
 	addr.intAddr -> r1
 	addr.keyAddr -> r2
@@ -233,22 +295,121 @@
 	while(r3 != r2)
 
 	goto :return:
-:endGame:
-	addr.intAddr -> r1
-	IntCtrl[r1].toMonitor <- r2
-	MOV r2, #1
-	LSL r2, r2, #7
-	IntCtrl[r1].command <- r2
-	MOV r2, #1
-	IntCtrl[r1].status <- r2
+:initPlayerCycle:
+	stackPtr -> r1
+	ADD r1, r1, #sizeof(int)
+	stackPtr <- r1
+	ADD r1, r15, #:retrp:
+	stackPtr& <- r1
+	goto :generateRandom:
+	:retrp:
 
-	MOV r3, #0
-	do
-		IntCtrl[r1].status -> r2
-	while(r3 != r2)
+	genRand -> r1
+
+	mod1 -> r3
+
+	AND r2, r1, #63
+	LightCycle[r3].x <- r2
+	AND r2, r1, #31
+	LightCycle[r3].y <- r2
+	AND r2, r1, #3
+	LightCycle[r3].heading <- r2
+
+	goto :return:
+:initEnemyCycle:
+	stackPtr -> r1
+	ADD r1, r1, #sizeof(int)
+	stackPtr <- r1
+	ADD r1, r15, #:retr:
+	stackPtr& <- r1
+	goto :generateRandom:
+	:retr:
+
+	mod1 -> r3
+
+	genRand -> r1
+	LightCycle[r3].color <- r1
+
+	AND r2, r1, #63
+	LightCycle[r3].x <- r2
+	AND r2, r1, #31
+	LightCycle[r3].y <- r2
+	AND r2, r1, #3
+	LightCycle[r3].heading <- r2
+
+	goto :return:
+:generateRandom:
+	randState -> r1
+
+	LSR r2, r1, #12
+	XOR r1, r2, r1
+
+	LSL r2, r1, #25
+	XOR r1, r2, r1
+
+	LSL r2, r1, #27
+	XOR r1, r2, r1
+
+	randState <- r1
+
+	64: MOV r2, #0x2545F491
+	LSL r2, r2, #32
+	64: MOV r1, #0x4F6CDD1D
+	ORR r2, r1, r2
+
+	randState -> r1
+
+	MUL r1, r1, r2
+	64: MOV r2, #0xFFFFFF
+	AND r1, r1, r2
+
+	LSR r2, r1, #12
+	XOR r1, r2, r1
+
+	LSL r2, r1, #25
+	XOR r1, r2, r1
+
+	LSL r2, r1, #27
+	XOR r1, r2, r1
+
+	randState <- r1
+
+	64: MOV r2, #0x2545F491
+	LSL r2, r2, #32
+	64: MOV r1, #0x4F6CDD1D
+	ORR r2, r1, r2
+
+	randState -> r1
+
+	MUL r1, r1, r2
+	64: MOV r2, #0xFFFFFF
+	AND r1, r1, r2
+	genRand <- r1
+
+	goto :return:
+:endGame:
+	mod1 -> r1
+
+	player* -> r2
+	if(r2 = r1)
+		addr.intAddr -> r1
+		IntCtrl[r1].toMonitor <- r2
+		MOV r2, #1
+		LSL r2, r2, #7
+		IntCtrl[r1].command <- r2
+		MOV r2, #1
+		IntCtrl[r1].status <- r2
+
+		MOV r3, #0
+		do
+			IntCtrl[r1].status -> r2
+		while(r3 != r2)
+	end
 
 	mod1 -> r1
 
+	MOV r2, #1
+	LightCycle[r1].hasCrashed <- r2
 	testX -> r2
 	com.x <- r2
 	color.x <- r2
@@ -275,7 +436,38 @@
 		VideoDevice[r1].status -> r2
 	while(r3 != r2)
 
-	HLT
+	totCrashed -> r1
+	ADD r1, r1, #1
+	totCrashed <- r1
+	numCycles -> r2
+	if(r2 = r1)
+		player.hasCrashed -> r1
+		MOV r2, #1
+		if(r1 != r2)
+			addr.intAddr -> r1
+			IntCtrl[r1].toMonitor <- r2
+			MOV r2, #1
+			LSL r2, r2, #7
+			IntCtrl[r1].command <- r2
+			MOV r2, #1
+			IntCtrl[r1].status <- r2
+
+			MOV r3, #0
+			do
+				IntCtrl[r1].status -> r2
+			while(r3 != r2)
+		end
+
+		addr.rtcAddr -> r1
+
+		MOV r2, #1
+		RTCDevice[r1].command <- r2
+		RTCDevice[r1].id <- r2
+
+		HLT
+	end
+
+	goto :return:
 :runAITick:
 	mod1 -> r1
 	LightCycle[r1].x -> r2
@@ -283,26 +475,21 @@
 	LightCycle[r1].heading -> r1
 
 	MOV r4, #0
-	if(r4 = r1) goto :up-a:
+	if(r4 = r1)
+		SUB r3, r3, #1
+	end
 	MOV r4, #1
-	if(r4 = r1) goto :down-a:
+	if(r4 = r1)
+		ADD r3, r3, #1
+	end
 	MOV r4, #3
-	if(r4 = r1) goto :left-a:
+	if(r4 = r1)
+		SUB r2, r2, #1
+	end
 	MOV r4, #2
-	if(r4 = r1) goto :right-a:
-
-	:up-a:
-	SUB r3, r3, #1
-	goto :end-a:
-	:down-a:
-	ADD r3, r3, #1
-	goto :end-a:
-	:left-a:
-	SUB r2, r2, #1
-	goto :end-a:
-	:right-a:
-	ADD r2, r2, #1
-	:end-a:
+	if(r4 = r1)
+		ADD r2, r2, #1
+	end
 
 	testX <- r2
 	testY <- r3
@@ -439,27 +626,22 @@
 	LightCycle[r1].heading -> r1
 
 	MOV r4, #0
-	if(r4 = r1) goto :up-t:
+	if(r4 = r1)
+		SUB r3, r3, #1
+	end
 	MOV r4, #1
-	if(r4 = r1) goto :down-t:
+	if(r4 = r1)
+		ADD r3, r3, #1
+	end
 	MOV r4, #3
-	if(r4 = r1) goto :left-t:
+	if(r4 = r1)
+		SUB r2, r2, #1
+	end
 	MOV r4, #2
-	if(r4 = r1) goto :right-t:
+	if(r4 = r1)
+		ADD r2, r2, #1
+	end
 
-	:up-t:
-	SUB r3, r3, #1
-	goto :end-t:
-	:down-t:
-	ADD r3, r3, #1
-	goto :end-t:
-	:left-t:
-	SUB r2, r2, #1
-	goto :end-t:
-	:right-t:
-	ADD r2, r2, #1
-
-	:end-t:
 	mod1 -> r1
 	LightCycle[r1].x <- r2
 	testX <- r2
@@ -495,33 +677,23 @@
 	key.key -> r1
 
 	MOV r2, #200
-	if(r2 = r1) goto :up-u:
+	if(r2 = r1)
+		MOV r1, #0
+	end
 	MOV r2, #208
-	if(r2 = r1) goto :down-u:
+	if(r2 = r1)
+		MOV r1, #1
+	end
 	MOV r2, #203
-	if(r2 = r1) goto :left-u:
+	if(r2 = r1)
+		MOV r1, #3
+	end
 	MOV r2, #205
-	if(r2 = r1) goto :right-u:
+	if(r2 = r1)
+		MOV r1, #2
+	end
 
-	goto :end-u:
-
-	:up-u:
-	MOV r1, #0
 	player.heading <- r1
-	goto :end-u:
-	:down-u:
-	MOV r1, #1
-	player.heading <- r1
-	goto :end-u:
-	:left-u:
-	MOV r1, #3
-	player.heading <- r1
-	goto :end-u:
-	:right-u:
-	MOV r1, #2
-	player.heading <- r1
-
-	:end-u:
 
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)
@@ -610,6 +782,35 @@
 
 	goto :return:
 :loadDeviceDescriptors:
+	;call findDeviceMod1, locate device with hash -1859106108 (VideoDevice) and store the address in mod1
+	stackPtr -> r1
+	ADD r1, r1, #sizeof(int)
+	stackPtr <- r1
+	ADD r1, r15, #:retm:
+	stackPtr& <- r1
+	64: MOV r1, #-2068042898
+	mod1 <- r1
+	goto :findDeviceMod1:
+	:retm:
+
+	;store VideoDevice address in vidAddr
+	mod1 -> r1
+	addr.mouseAddr <- r1
+
+	stackPtr -> r1
+	ADD r1, r1, #sizeof(int)
+	stackPtr <- r1
+	ADD r1, r15, #:retrtc:
+	stackPtr& <- r1
+	64: MOV r1, #-1017264500
+	mod1 <- r1
+	goto :findDeviceMod1:
+	:retrtc:
+
+	;store VideoDevice address in vidAddr
+	mod1 -> r1
+	addr.rtcAddr <- r1
+
 	;call findDeviceMod1, locate device with hash -1859106108 (VideoDevice) and store the address in mod1
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)

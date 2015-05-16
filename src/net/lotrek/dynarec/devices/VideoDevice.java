@@ -59,7 +59,7 @@ public class VideoDevice extends MemorySpaceDevice
 						
 						int x = (byte) str[2].getValue(), y = (byte) str[3].getValue();
 						
-//						System.out.printf("type: %d; x: %d; y: %d; data: %s;\n",(byte)str[0].getValue(), x, y, "" + (char)(int)str[1].getValue());
+//						System.out.printf("type: %d; x: %d; y: %d; data: %s;\n",(byte)str[0].getValue(), x, y, (byte)str[0].getValue() == 0 ? "" + (char)(int)str[1].getValue() : "" + (int)str[1].getValue());
 						if((byte)str[0].getValue() == 0)
 							screenText[y][x] = (char)(int)str[1].getValue();
 						if((byte)str[0].getValue() == 1)

@@ -1,7 +1,5 @@
 package net.lotrek.dynarec.devices;
 
-import java.util.Arrays;
-
 public class DirectoryDevice extends MemorySpaceDevice
 {
 	/*

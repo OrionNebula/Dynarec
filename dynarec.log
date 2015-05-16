@@ -1,44 +1,52 @@
-[2015/05/16 00:48:24:673 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
-[2015/05/16 00:48:24:673 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure DirectoryDevice with content [byte status, byte devCount, byte depStart, byte depLength, int depAddr]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure DeviceEntry with content [int deviceHash, int deviceAddress, byte occupationLength]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure VideoDevice with content [byte status, int width, int height, int instAddr]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure GraphicsCommand with content [byte mode, int data, byte x, byte y]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure IntCtrl with content [byte status, byte command, int toMonitor, byte regionLength]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure KeyboardDevice with content [byte swap, byte busy, int bufferLen, int readLen, int addr]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure MouseDevice with content [byte status, int x, int y]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure IVT with content [int monitorPtr]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure LightCycle with content [byte x, byte y, byte heading, int color]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure DeviceAddresses with content [int vidAddr, int intAddr, int keyAddr]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure Keystroke with content [int key, byte char]
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure GraphicsQuery with content [byte char, int color]
-[2015/05/16 00:48:24:689 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable addr with type DeviceAddresses
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable comPtr with type int
-[2015/05/16 00:48:24:689 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable com with type GraphicsCommand
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable color with type GraphicsCommand
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testFor with type GraphicsQuery
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable key with type Keystroke
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable player with type LightCycle
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable enemy with type LightCycle
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable intTbl with type IVT
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testX with type byte
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testY with type byte
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable memSize with type int
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable mod1 with type int
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable mod2 with type int
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable stackPtr with type int
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable returnStack with type int[16]
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable entLoaded with type byte
-[2015/05/16 00:48:24:705 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable ent with type DeviceEntry[16]
-[2015/05/16 00:48:24:767 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
-[2015/05/16 00:48:24:939 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "VideoDevice" with hashcode -1859106108
-[2015/05/16 00:48:24:939 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "InterruptController" with hashcode -2043936910
-[2015/05/16 00:48:24:955 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "KeyboardDevice" with hashcode 1377772586
-[2015/05/16 00:48:24:955 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "MouseDevice" with hashcode -2068042898
-[2015/05/16 00:48:24:955 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "DirectoryDevice" with hashcode 1751864758
-[2015/05/16 00:48:26:773 VideoDevice.initializeDevice(VideoDevice.java:139)] Video Device initialized
-[2015/05/16 00:48:26:776 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:48)] net.lotrek.dynarec.devices.DirectoryDevice: 4088
-[2015/05/16 00:48:26:776 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:48)] net.lotrek.dynarec.devices.VideoDevice: 4075
-[2015/05/16 00:48:26:777 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:48)] net.lotrek.dynarec.devices.InterruptController: 4068
-[2015/05/16 00:48:26:777 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:48)] net.lotrek.dynarec.devices.KeyboardDevice: 4054
-[2015/05/16 00:48:26:777 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:48)] net.lotrek.dynarec.devices.MouseDevice: 4045
+[2015/05/16 12:52:22:965 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure DirectoryDevice with content [byte status, byte devCount, byte depStart, byte depLength, int depAddr]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure DeviceEntry with content [int deviceHash, int deviceAddress, byte occupationLength]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure VideoDevice with content [byte status, int width, int height, int instAddr]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure GraphicsCommand with content [byte mode, int data, byte x, byte y]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure IntCtrl with content [byte status, byte command, int toMonitor, byte regionLength]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure KeyboardDevice with content [byte swap, byte busy, int bufferLen, int readLen, int addr]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure MouseDevice with content [int x, int y]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure RTCDevice with content [byte id, byte command, int period]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure IVT with content [int monitorPtr, int rtcPtr]
+[2015/05/16 12:52:22:965 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure LightCycle with content [byte hasCrashed, byte x, byte y, byte heading, int color]
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure DeviceAddresses with content [int vidAddr, int intAddr, int keyAddr, int mouseAddr, int rtcAddr]
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure Keystroke with content [int key, byte char]
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateDefines(AppleAdvAsm.java:163)] Defined structure GraphicsQuery with content [byte char, int color]
+[2015/05/16 12:52:22:980 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable addr with type DeviceAddresses
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable comPtr with type int
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable com with type GraphicsCommand
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable color with type GraphicsCommand
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testFor with type GraphicsQuery
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable key with type Keystroke
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable player with type LightCycle
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable numCycles with type byte
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable enemies with type LightCycle[5]
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable intTbl with type IVT
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testX with type byte
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable testY with type byte
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable randState with type long
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable genRand with type int
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable memSize with type int
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable mod1 with type int
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable mod2 with type int
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable iter with type byte
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable totCrashed with type byte
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable stackPtr with type int
+[2015/05/16 12:52:22:980 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable returnStack with type int[16]
+[2015/05/16 12:52:22:996 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable entLoaded with type byte
+[2015/05/16 12:52:22:996 AppleAdvAsm.generateData(AppleAdvAsm.java:102)] Defined variable ent with type DeviceEntry[16]
+[2015/05/16 12:52:23:43 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
+[2015/05/16 12:52:23:293 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "VideoDevice" with hashcode -1859106108
+[2015/05/16 12:52:23:293 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "InterruptController" with hashcode -2043936910
+[2015/05/16 12:52:23:293 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "KeyboardDevice" with hashcode 1377772586
+[2015/05/16 12:52:23:293 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "MouseDevice" with hashcode -2068042898
+[2015/05/16 12:52:23:308 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "RealTimeClockDevice" with hashcode -1017264500
+[2015/05/16 12:52:23:308 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "DirectoryDevice" with hashcode 1751864758
+[2015/05/16 12:52:25:157 VideoDevice.initializeDevice(VideoDevice.java:139)] Video Device initialized
+[2015/05/16 12:52:25:157 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.DirectoryDevice: 8184
+[2015/05/16 12:52:25:157 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.VideoDevice: 8171
+[2015/05/16 12:52:25:158 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.InterruptController: 8164
+[2015/05/16 12:52:25:158 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.KeyboardDevice: 8150
+[2015/05/16 12:52:25:158 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.MouseDevice: 8142
+[2015/05/16 12:52:25:158 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.RealTimeClockDevice: 8136
