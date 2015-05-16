@@ -6,9 +6,9 @@ import org.lwjgl.input.Keyboard;
 
 public class KeyboardDevice extends MemorySpaceDevice
 {
-	private Structure struct = new Structure(Byte.class, Byte.class, Integer.class, Integer.class, Integer.class);
+	private Structure struct = new Structure(Byte.class, Byte.class, Integer.class, Integer.class, Integer.class), keyStroke = new Structure(Integer.class, Byte.class);
 	private Register[] instanceRegisters;
-	private LinkedBlockingQueue<Byte[]> keyboardData = new LinkedBlockingQueue<>();
+	private LinkedBlockingQueue<Object[]> keyboardData = new LinkedBlockingQueue<>();
 	
 	public int getOccupationLength()
 	{
@@ -21,7 +21,7 @@ public class KeyboardDevice extends MemorySpaceDevice
 		if(Keyboard.isCreated())
 			while(Keyboard.next())
 				if(Keyboard.getEventKeyState())
-					keyboardData.add(new Byte[]{(byte) Keyboard.getEventKey(), (byte) Keyboard.getEventCharacter()});
+					keyboardData.add(new Object[]{Keyboard.getEventKey(), (byte) Keyboard.getEventCharacter()});
 		
 		if(oldSiz != keyboardData.size())
 			instanceRegisters[0].setValue(Byte.class, (byte)(instanceRegisters[0].getValue(Byte.class) == 0 ? 1 : 0));
@@ -30,14 +30,12 @@ public class KeyboardDevice extends MemorySpaceDevice
 		{
 			int length = instanceRegisters[3].getValue(Integer.class), addr = instanceRegisters[4].getValue(Integer.class);
 			
-			byte[] b = new byte[length * 2];
-			for (int i = 0; i < b.length && !keyboardData.isEmpty(); i += 2) {
-				Byte[] data = keyboardData.poll();
-				b[i] = data[0];
-				b[i + 1] = data[1];
+			for (int i = 0; i < length * keyStroke.getLength() && !keyboardData.isEmpty(); i += keyStroke.getLength()) {
+				Object[] data = keyboardData.poll();
+				Register[] inst = keyStroke.getInstance(addr + i, this.getProcessor().getMemory());
+				inst[0].setValue(Integer.class, (int)data[0]);
+				inst[1].setValue(Byte.class, (byte)data[1]);
 			}
-			
-			System.arraycopy(b, 0, getProcessor().getMemory(), addr, length * 2);
 			
 			instanceRegisters[1].setValue(Byte.class, (byte)0);
 		}

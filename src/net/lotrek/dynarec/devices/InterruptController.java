@@ -31,7 +31,10 @@ public class InterruptController extends MemorySpaceDevice
 					cachedValues.add((byte)instanceRegisters[1].getValue() & 0x7F, (long)(byte)(Byte)Register.getTypeForBytes((byte)instanceRegisters[3].getValue(), this.getProcessor().getMemory(), (int)instanceRegisters[2].getValue()));
 			}
 			else //remove
+			{
+//				System.out.println("Removed interrupt " + ((byte)instanceRegisters[1].getValue() & 0x7F));
 				monitorList.remove((byte)instanceRegisters[1].getValue() & 0x7F);
+			}
 			
 			instanceRegisters[0].setValue(Byte.class, (byte)0);
 		}

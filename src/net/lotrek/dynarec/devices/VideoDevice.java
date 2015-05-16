@@ -5,7 +5,6 @@ import java.awt.FontFormatException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Mouse;
@@ -60,7 +59,7 @@ public class VideoDevice extends MemorySpaceDevice
 						
 						int x = (byte) str[2].getValue(), y = (byte) str[3].getValue();
 						
-//						System.out.printf("x: %d; y: %d; data: %s;\n", x, y, "" + (char)(int)str[1].getValue());
+//						System.out.printf("type: %d; x: %d; y: %d; data: %s;\n",(byte)str[0].getValue(), x, y, "" + (char)(int)str[1].getValue());
 						if((byte)str[0].getValue() == 0)
 							screenText[y][x] = (char)(int)str[1].getValue();
 						if((byte)str[0].getValue() == 1)
@@ -68,8 +67,13 @@ public class VideoDevice extends MemorySpaceDevice
 						if((byte)str[0].getValue() == 2)
 						{
 							Register[] pix = queryStructure.getInstance(str[1].getValue(Integer.class), this.getProcessor().getMemory());
-							pix[0].setValue(Byte.class, (byte)0);
-							pix[1].setValue(Integer.class, screenColors[x][y] == null ? 0xffffff : (screenColors[x][y].getAlphaByte() << 24) | (screenColors[x][y].getRedByte() << 16) | (screenColors[x][y].getGreenByte() << 8) | screenColors[x][y].getBlueByte());
+							pix[0].setValue(Byte.class, (byte)screenText[y][x]);
+							pix[1].setValue(Integer.class, screenColors[y][x] == null ? 0xffffff : (screenColors[y][x].getAlphaByte() << 24) | (screenColors[y][x].getRedByte() << 16) | (screenColors[y][x].getGreenByte() << 8) | screenColors[y][x].getBlueByte());
+						}
+						if((byte)str[0].getValue() == 3)
+						{
+							screenText = new char[32][64];
+							screenColors = new Color[32][64];
 						}
 					}
 				}

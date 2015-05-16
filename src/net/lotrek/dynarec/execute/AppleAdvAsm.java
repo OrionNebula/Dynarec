@@ -50,7 +50,7 @@ public class AppleAdvAsm implements Assembler {
 					line = line.replaceAll("\\/\\*[^*/]*\\*\\/", "").replaceAll("\\/\\*.*", "");
 				}
 				
-				line = line.replaceAll(";.*", "").trim();
+				line = line.replaceAll("'.'", line.contains("'") ? ((int)line.split("'")[1].charAt(0)) + "" : "").replaceAll(";.*", "").trim();
 				
 				if(line.isEmpty())
 					continue;
@@ -350,8 +350,6 @@ public class AppleAdvAsm implements Assembler {
 			ind++;
 		}
 		
-//		System.out.println(toAsm);
-		
 		int off = globOff;
 		for (String line : toAsm.split("\n"))
 		{
@@ -363,6 +361,7 @@ public class AppleAdvAsm implements Assembler {
 			if(line.matches(":.*:"))
 			{
 				labels.put(line, off);
+//				System.out.println("Added label \"" + line + "\" : " + labels);
 				continue;
 			}
 			
@@ -375,6 +374,12 @@ public class AppleAdvAsm implements Assembler {
 			if(line.matches("\\{0x[0-9A-F]+\\}"))
 			{
 				off += 1;
+				continue;
+			}
+			
+			if(line.matches("\".*\""))
+			{
+				off += line.trim().length() - 2;
 				continue;
 			}
 			
@@ -404,6 +409,14 @@ public class AppleAdvAsm implements Assembler {
 				continue;
 			}
 			
+			if(line.matches("\".*\""))
+			{
+				dos.writeBytes(line.trim().substring(1, line.length() - 1));
+				globOff += line.trim().length() - 2;
+				continue;
+			}
+			
+			
 			if(line.matches(":.*:"))
 			{
 				continue;
@@ -411,8 +424,13 @@ public class AppleAdvAsm implements Assembler {
 			
 			if(line.contains(":"))
 				for (String label : labels.keySet())
-					line = line.replace(label.toUpperCase(), "" + (labels.get(label) - globOff - (is64Bit ? 8 : 4)));	
+				{
+					if(line.contains(label.toUpperCase()))
+//						System.out.println("Replaced instance of \"" + label.toUpperCase() + "\"");
+					line = line.replace(label.toUpperCase(), "" + (labels.get(label) - globOff - (is64Bit ? 8 : 4)));
+				}
 		
+//			System.out.println(line + " : " + is64Bit);
 			
 			String[] seg = line.split(" ");
 			String[] seg2 = new String[seg.length + 1];
@@ -465,7 +483,7 @@ public class AppleAdvAsm implements Assembler {
 				else
 					toRender = String.format("L@%s[r0].value", type) + toRender;
 				
-				return String.format("ADD r0, r15, #:V%sV:\nADD r0, r0, #%d\n", name, lenOffset) + generateStructSet(toRender);
+				return String.format("64: ADD r0, r15, #:V%sV:\n64: ADD r0, r0, #%d\n", name, lenOffset) + generateStructSet(toRender);
 			}else
 			{
 				boolean isRef = desc.contains("&");
@@ -479,9 +497,9 @@ public class AppleAdvAsm implements Assembler {
 					toRender = String.format("L@%s[r0].value", type) + toRender;
 				
 //				System.out.println(desc);
-//				System.out.println((isRef?"":String.format("ADD r0, r15, #:V%sV:\n", name)) + (isRef ? generateStructAccess(name + " -> r0") : "") + generateStructSet(toRender));
+//				System.out.println((isRef?"":String.format("64: ADD r0, r15, #:V%sV:\n", name)) + (isRef ? generateStructAccess(name + " -> r0") : "") + generateStructSet(toRender));
 				
-				return (isRef?"":String.format("ADD r0, r15, #:V%sV:\n", name)) + (isRef ? generateStructAccess(name + " -> r0") : "") + generateStructSet(toRender);
+				return (isRef?"":String.format("64: ADD r0, r15, #:V%sV:\n", name)) + (isRef ? generateStructAccess(name + " -> r0") : "") + generateStructSet(toRender);
 			}
 		}
 		
@@ -504,7 +522,7 @@ public class AppleAdvAsm implements Assembler {
 			}else
 				toReturn = String.format("64:MOV r0, #%d\n", getTypeLength(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(type).replaceAll("\\[|\\]", "")) * Integer.parseInt(halves[1].replaceAll(".*\\[", "").replaceAll("\\].*", "").trim()));
 		
-			toReturn += String.format("ADD r0, r0, %s\n", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase());
+			toReturn += String.format("64: ADD r0, r0, %s\n", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase());
 			addrReg = "r0";
 			
 			if(defines.containsKey(halves[0].replaceAll("\\[.*", "").trim()))
@@ -580,7 +598,7 @@ public class AppleAdvAsm implements Assembler {
 				else
 					toRender = String.format("L@%s[r0].value", type) + toRender;
 				
-				return String.format("ADD r0, r15, #:V%sV:\nADD r0, r0, #%d\n", name, lenOffset) + generateStructAccess(toRender);
+				return String.format("64: ADD r0, r15, #:V%sV:\n64: ADD r0, r0, #%d\n", name, lenOffset) + generateStructAccess(toRender);
 			}else
 			{
 				String addrReg = "r0";
@@ -598,9 +616,9 @@ public class AppleAdvAsm implements Assembler {
 					toRender = String.format("L@%s[%s].value", type, isRef ? addrReg : "r0") + toRender;
 				
 //				System.out.println(desc);
-//				System.out.println(String.format("ADD %s, r15, #:V%sV:\n", addrReg, name) + (!isRef ? "" : generateStructAccess(name + " -> r0")) + (isPointer && !isRef ? "" : generateStructAccess(toRender)));
+//				System.out.println(String.format("64: ADD %s, r15, #:V%sV:\n", addrReg, name) + (!isRef ? "" : generateStructAccess(name + " -> r0")) + (isPointer && !isRef ? "" : generateStructAccess(toRender)));
 				
-				return String.format("ADD %s, r15, #:V%sV:\n", addrReg, name) + (!isRef ? "" : generateStructAccess(name + " -> r0")) + (isPointer && !isRef ? "" : generateStructAccess(toRender));
+				return String.format("64: ADD %s, r15, #:V%sV:\n", addrReg, name) + (!isRef ? "" : generateStructAccess(name + " -> r0")) + (isPointer && !isRef ? "" : generateStructAccess(toRender));
 			}
 		}
 		
@@ -622,7 +640,7 @@ public class AppleAdvAsm implements Assembler {
 			}else
 				toReturn = String.format("64:MOV r0, #%d\n", getTypeLength(defines.get(halves[0].replaceAll("\\[.*", "").trim()).getVarType(type).replaceAll("\\[|\\]", "")) * Integer.parseInt(halves[1].replaceAll(".*\\[", "").replaceAll("\\].*", "").trim()));
 		
-			toReturn += String.format("ADD r0, r0, %s\n", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase());
+			toReturn += String.format("64: ADD r0, r0, %s\n", halves[0].replaceAll(".*\\[", "").replaceAll("\\].*", "").toLowerCase());
 			addrReg = "r0";
 			
 			if(defines.containsKey(halves[0].replaceAll("\\[.*", "").trim()))
@@ -805,11 +823,23 @@ public class AppleAdvAsm implements Assembler {
 			head |= Integer.parseInt(line[2].replace("R","")) & 0xf;
 			dos.writeShort(head);
 			head = (Integer.parseInt(line[3].replace("R","")) & 0xf) << 12;
-			if(!line[4].startsWith("#"))
-				head |= 1 << 11 | (Integer.parseInt(line[4].replace("R","")) & 0xf);
-			else
-				head |= Integer.parseInt(line[4].replace("#", "")) & 0x7ff;
-			dos.writeShort(head);
+			if(!is64)
+			{
+				if(!line[4].startsWith("#"))
+					head |= 1 << 11 | (Integer.parseInt(line[4].replace("R","")) & 0xf);
+				else
+					head |= Integer.parseInt(line[4].replace("#", "")) & 0x7ff;
+				dos.writeShort(head);
+			}else
+			{
+				int toWrite = 0;
+				if(!line[4].startsWith("#"))
+					toWrite = (Integer.parseInt(line[4].replace("R","")) & 0xf);
+				else
+					toWrite = Integer.parseInt(line[4].replace("#", ""));
+				dos.writeShort(head | (!line[4].startsWith("#") ? 1 : 0));
+				dos.writeInt(toWrite);
+			}
 		}),
 		SUB(2, (line, head, dos, is64)->{
 			head |= Integer.parseInt(line[2].replace("R","")) & 0xf;

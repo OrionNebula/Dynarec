@@ -75,20 +75,39 @@ public class APPLEDRCx64 extends Processor
 		(linst, gen) -> { //ADD
 			int len = 0;
 			
-			len += loadRegisterBytecode(gen, (int)((linst >> 12) & 0xf));
-			
-			if(((linst >> 11) & 1) == 1)
-				len += loadRegisterBytecode(gen, (int) (linst & 0xf));
-			else
+			if((linst >> 63 & 1) != 1) //64 bit
 			{
-				len += 3;
-				gen.addBytecode(Bytecode.ldc, getConstant(gen, "I" + (int)(linst & 0xfff), ConstPoolEntry.CONSTANT_Integer, (int)(linst & 0xfff)));
-				gen.addBytecode(Bytecode.i2l);
+				len += loadRegisterBytecode(gen, (int)((linst >> 12) & 0xf));
+				
+				if(((linst >> 11) & 1) == 1)
+					len += loadRegisterBytecode(gen, (int) (linst & 0xf));
+				else
+				{
+					len += 3;
+					gen.addBytecode(Bytecode.ldc, getConstant(gen, "I" + (int)(linst & 0xfff), ConstPoolEntry.CONSTANT_Integer, (int)(linst & 0xfff)));
+					gen.addBytecode(Bytecode.i2l);
+				}
+				
+				len++;
+				gen.addBytecode(Bytecode.ladd);
+				len += setRegisterFromStackBytecode(gen, (int) ((linst >> 16) & 0xf));
+			}else
+			{
+				len += loadRegisterBytecode(gen, (int)((linst >> 44) & 0xf));
+				
+				if(((linst >> 33) & 1) == 1)
+					len += loadRegisterBytecode(gen, (int) (linst & 0xf));
+				else
+				{
+					len += 3;
+					gen.addBytecode(Bytecode.ldc, getConstant(gen, "I" + (int)linst, ConstPoolEntry.CONSTANT_Integer, (int)linst));
+					gen.addBytecode(Bytecode.i2l);
+				}
+				
+				len++;
+				gen.addBytecode(Bytecode.ladd);
+				len += setRegisterFromStackBytecode(gen, (int) ((linst >> 48) & 0xf));
 			}
-			
-			len++;
-			gen.addBytecode(Bytecode.ladd);
-			len += setRegisterFromStackBytecode(gen, (int) ((linst >> 16) & 0xf));
 			
 			return len;
 		},
