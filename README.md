@@ -113,6 +113,16 @@ Store the number 12 into register 1. Store the value of register one into the ad
 MOV r1, #12
 stackPtr& <- r1
 ```
+###Macro
+Macros are code blocks that replace every instance of their invocation with their contents. Here's an example of a macro section entry:
+```
+WriteRegister(@Register, @Value)
+{
+	MOV @Register, #@Value
+}
+```
+When called in the code (`WriteRegister(r1, 45)`) the values passed into the macro replace each instance of the argument name in the macro and that altered text takes the place of the invocation and is processed again. Macros can contain any valid text mode structure, including other macro invocations.
+
 ##Control Structures
 APPLEDRCx64 assembly has 3 major control structures: goto, if, and do-while. These are made possible through the use of labels, small tags which anchor a point in the assembly. Referneces made to these tags in a number literal will be replaced with the distance from that instruction to the label. This is used to obtain absoulte pointers to relative objects like variables as well as perform accurate jumps. Here's a small code example which employs these structures.
 
