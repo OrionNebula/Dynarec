@@ -156,10 +156,9 @@
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)
 	stackPtr <- r1
-	ADD r1, r15, #:ret7:
+	ADD r1, r15, #24
 	stackPtr& <- r1
 	goto :loadDeviceDescriptors:
-	:ret7:
 
 	addr.mouseAddr -> r1
 	MOV r4, #0
@@ -173,10 +172,9 @@
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)
 	stackPtr <- r1
-	ADD r1, r15, #:ret10:
+	ADD r1, r15, #24
 	stackPtr& <- r1
 	goto :setupKeyboardInterrupt:
-	:ret10:
 
 	MOV r1, #5
 	player.x <- r1
@@ -199,10 +197,9 @@
 		stackPtr -> r1
 		ADD r1, r1, #sizeof(int)
 		stackPtr <- r1
-		ADD r1, r15, #:retes:
+		ADD r1, r15, #24
 		stackPtr& <- r1
 		goto :initEnemyCycle:
-		:retes:
 
 		ADD r5, r5, #1
 		numCycles -> r1
@@ -243,18 +240,16 @@
 			stackPtr -> r1
 			ADD r1, r1, #sizeof(int)
 			stackPtr <- r1
-			ADD r1, r15, #:retaes:
+			ADD r1, r15, #24
 			stackPtr& <- r1
 			goto :runAITick:
-			:retaes:
 
 			stackPtr -> r1
 			ADD r1, r1, #sizeof(int)
 			stackPtr <- r1
-			ADD r1, r15, #:rete:
+			ADD r1, r15, #24
 			stackPtr& <- r1
 			goto :moveLightCycle:
-			:rete:
 
 		end
 
@@ -299,10 +294,9 @@
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)
 	stackPtr <- r1
-	ADD r1, r15, #:retrp:
+	ADD r1, r15, #24
 	stackPtr& <- r1
 	goto :generateRandom:
-	:retrp:
 
 	genRand -> r1
 
@@ -320,10 +314,9 @@
 	stackPtr -> r1
 	ADD r1, r1, #sizeof(int)
 	stackPtr <- r1
-	ADD r1, r15, #:retr:
+	ADD r1, r15, #24
 	stackPtr& <- r1
 	goto :generateRandom:
-	:retr:
 
 	mod1 -> r3
 

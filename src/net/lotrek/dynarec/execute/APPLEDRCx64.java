@@ -1025,34 +1025,41 @@ public class APPLEDRCx64 extends Processor
 					continue;
 				}
 				
+				String compOp = "NV";
 				switch((int)ret[3])
 				{
 				case 1:
 					if(!(ret[1] != ret[2]))
 						ret[0] = 0;
+					compOp = "!=";
 					break;
 				case 2:
 					if(!(ret[1] < ret[2]))
 						ret[0] = 0;
+						compOp = "<";
 					break;
 				case 3:
 					if(!(ret[1] == ret[2]))
 						ret[0] = 0;
+						compOp = "==";
 					break;
 				case 4:
 					if(!(ret[1] > ret[2]))
 						ret[0] = 0;
+						compOp = ">";
 					break;
 				case 5:
 					if(!(ret[1] <= ret[2]))
 						ret[0] = 0;
+						compOp = "<=";
 					break;
 				case 6:
 					if(!(ret[1] >= ret[2]))
 						ret[0] = 0;
+						compOp = ">=";
 					break;
 				}
-//				System.out.printf("%d : %d : %d | %s\n", ret[1], ret[3], ret[2], Arrays.toString(getRegisters()));
+//				System.out.printf("%d : %s : %d | %s\n", ret[1], compOp, ret[2], Arrays.toString(getRegisters()));
 //				System.out.println("New " + ret[0] + " : " + addr + " : " + sh[0]);
 				getRegisters()[15] += ret[0];
 				

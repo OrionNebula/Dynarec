@@ -75,6 +75,9 @@ public class AppleAdvAsm implements Assembler {
 					case "text":
 						i += generateText(i, lines, dos);
 						break;
+					case "macro":
+						i += generateMacros(i, lines, dos);
+						break;
 					default:
 						scr.close();
 						throw new RuntimeException(String.format("Assembly failed: unknown #mode suffix \"%s\" at line %d", lines.get(i).split(" ")[1], i + 1));
@@ -141,6 +144,27 @@ public class AppleAdvAsm implements Assembler {
 		return ind - indO;
 	}
 	
+	private HashMap<String, AsmMacro> macros = new HashMap<>();
+	
+	private int generateMacros(int ind, ArrayList<String> lines, DataOutputStream dos)
+	{
+		int indO = ++ind;
+		
+		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
+		{
+			String structDef = lines.get(ind++);
+			if(structDef.equals("}"))
+				continue;
+			String macroBody = "";
+			while(!lines.get(++ind).equals("}"))
+				macroBody += (lines.get(ind)) + "\n";
+			System.out.printf("Defined macro %s with content:\n%s\n", structDef, macroBody);
+			macros.put(structDef.split("\\(")[0], new AsmMacro(macroBody, structDef.split("\\(|\\)")[1].split(",")));
+		}
+		
+		return ind - indO;
+	}
+	
 	private HashMap<String, AsmStruct> defines = new HashMap<>();
 	{
 		defines.put("L@int", new AsmStruct("L@int", new String[]{"int value"}));
@@ -181,6 +205,12 @@ public class AppleAdvAsm implements Assembler {
 			try {
 				if(lines.get(ind).equals("#data"))
 					toAsm += dataPostfix + (dataPostfix = "");
+				else if(lines.get(ind).matches(".*\\(.*\\).*") && macros.containsKey(lines.get(ind).trim().split("\\(")[0]))
+				{
+					String[] newLines = macros.get(lines.get(ind).trim().split("\\(")[0]).getMacroValue(lines.get(ind).trim().split("\\(|\\)")[1].split(",")).split("\n");
+					lines.remove(ind);
+					lines.addAll(ind--, Arrays.asList(newLines));
+				}
 				else if(lines.get(ind).contains("->"))
 					toAsm += generateStructAccess(lines.get(ind));
 				else if(lines.get(ind).contains("<-"))
@@ -710,6 +740,28 @@ public class AppleAdvAsm implements Assembler {
 			return AsmStruct.typesToLengths.get(type);
 		
 		throw new RuntimeException(String.format("Assembly failed: \"%s\" does not represent a valid type", type));
+	}
+	
+	private static class AsmMacro
+	{
+		private String body;
+		private String[] argNames;
+		
+		public AsmMacro(String body, String...argNames)
+		{
+			this.argNames = argNames;
+			this.body = body;
+		}
+		
+		public String getMacroValue(String...argValues)
+		{
+			String newBody = body;
+			
+			for(int i = 0; i < argValues.length; i++)
+				newBody = newBody.replace(argNames[i].trim(), argValues[i].trim());
+			
+			return newBody;
+		}
 	}
 	
 	private static class AsmStruct

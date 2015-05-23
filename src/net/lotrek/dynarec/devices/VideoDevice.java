@@ -10,6 +10,7 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
+import org.lwjgl.opengl.GL11;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -18,7 +19,7 @@ import org.newdawn.slick.TrueTypeFont;
 
 public class VideoDevice extends MemorySpaceDevice
 {
-	public static final int RENDER_TEXT = 0, RENDER_RAW = 1, INITAL_WIDTH = 1280, INITIAL_HEIGHT = 960;
+	public static final int RENDER_TEXT = 0, RENDER_RAW = 1, INITAL_WIDTH = 1280/2, INITIAL_HEIGHT = 960/2;
 	
 	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class), pixelStructure = new Structure(Byte.class, Integer.class, Byte.class, Byte.class), queryStructure = new Structure(Byte.class, Integer.class);
 	private Register[] instanceRegisters;
@@ -66,9 +67,17 @@ public class VideoDevice extends MemorySpaceDevice
 							screenColors[y][x] = new Color((int)str[1].getValue());
 						if((byte)str[0].getValue() == 2)
 						{
-							Register[] pix = queryStructure.getInstance(str[1].getValue(Integer.class), this.getProcessor().getMemory());
-							pix[0].setValue(Byte.class, (byte)screenText[y][x]);
-							pix[1].setValue(Integer.class, screenColors[y][x] == null ? 0xffffff : (screenColors[y][x].getAlphaByte() << 24) | (screenColors[y][x].getRedByte() << 16) | (screenColors[y][x].getGreenByte() << 8) | screenColors[y][x].getBlueByte());
+							if(x < 0 || x > 63 || y < 0 || y > 31)
+							{
+								Register[] pix = queryStructure.getInstance(str[1].getValue(Integer.class), this.getProcessor().getMemory());
+								pix[0].setValue(Byte.class, (byte)-1);
+								pix[1].setValue(Integer.class, 0);
+							}else
+							{
+								Register[] pix = queryStructure.getInstance(str[1].getValue(Integer.class), this.getProcessor().getMemory());
+								pix[0].setValue(Byte.class, (byte)screenText[y][x]);
+								pix[1].setValue(Integer.class, screenColors[y][x] == null ? 0xffffff : (screenColors[y][x].getAlphaByte() << 24) | (screenColors[y][x].getRedByte() << 16) | (screenColors[y][x].getGreenByte() << 8) | screenColors[y][x].getBlueByte());
+							}
 						}
 						if((byte)str[0].getValue() == 3)
 						{
@@ -90,6 +99,17 @@ public class VideoDevice extends MemorySpaceDevice
 				for (int y = 0; y < screenText.length; y++)
 					for (int x = 0; x < screenText[y].length; x++)
 						font.drawString(x * (Display.getWidth() / 64), y * (Display.getHeight() / 32), "" + screenText[y][x], screenColors[y][x] == null ? Color.white : screenColors[y][x]);
+				
+				GL11.glDisable(GL_TEXTURE_2D);
+				
+				GL11.glBegin(GL_QUADS);
+					GL11.glVertex2i(Mouse.getX(), Display.getHeight() - Mouse.getY());
+					GL11.glVertex2i(Mouse.getX() + 5, Display.getHeight() -  Mouse.getY());
+					GL11.glVertex2i(Mouse.getX() + 5, Display.getHeight() -  Mouse.getY() + 5);
+					GL11.glVertex2i(Mouse.getX(), Display.getHeight() -  Mouse.getY() + 5);
+				GL11.glEnd();
+				
+				GL11.glEnable(GL_TEXTURE_2D);
 				
 				Display.update();
 				break;
