@@ -10,7 +10,6 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL11;
 
 import static org.lwjgl.opengl.GL11.*;
 
@@ -100,7 +99,7 @@ public class VideoDevice extends MemorySpaceDevice
 					for (int x = 0; x < screenText[y].length; x++)
 						font.drawString(x * (Display.getWidth() / 64), y * (Display.getHeight() / 32), "" + screenText[y][x], screenColors[y][x] == null ? Color.white : screenColors[y][x]);
 				
-				GL11.glDisable(GL_TEXTURE_2D);
+				/*GL11.glDisable(GL_TEXTURE_2D);
 				
 				GL11.glBegin(GL_QUADS);
 					GL11.glVertex2i(Mouse.getX(), Display.getHeight() - Mouse.getY());
@@ -109,7 +108,7 @@ public class VideoDevice extends MemorySpaceDevice
 					GL11.glVertex2i(Mouse.getX(), Display.getHeight() -  Mouse.getY() + 5);
 				GL11.glEnd();
 				
-				GL11.glEnable(GL_TEXTURE_2D);
+				GL11.glEnable(GL_TEXTURE_2D);*/
 				
 				Display.update();
 				break;

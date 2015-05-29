@@ -5,7 +5,7 @@ import org.lwjgl.opengl.Display;
 
 public class MouseDevice extends MemorySpaceDevice
 {
-	private static final Structure struct = new Structure(Integer.class, Integer.class);
+	private static final Structure struct = new Structure(Integer.class, Integer.class, Byte.class);
 	private Register[] inst;
 	
 	public int getOccupationLength()
@@ -15,16 +15,12 @@ public class MouseDevice extends MemorySpaceDevice
 
 	public void executeDeviceCycle()
 	{
-		inst[0].setValue(Integer.class, Mouse.getX());
-		inst[1].setValue(Integer.class, Display.getHeight() - Mouse.getY() - 1);
-
-		/*if(((byte)inst[0].getValue() & 1) == 1)
+		if(Mouse.isCreated())
 		{
-			inst[1].setValue(Integer.class, Mouse.getX());
-			inst[2].setValue(Integer.class, Display.getHeight() - Mouse.getY() - 1);
-			inst[0].setValue(Byte.class, (byte)0);
-//			System.out.printf("Mouse X: %d; Mouse Y: %d;\n", Mouse.getX(), Display.getHeight() - Mouse.getY() - 1);
-		}*/
+			inst[0].setValue(Integer.class, Mouse.getX());
+			inst[1].setValue(Integer.class, Display.getHeight() - Mouse.getY() - 1);
+			inst[2].setValue(Byte.class, (byte)((Mouse.isButtonDown(0) ? 1 : 0) | (Mouse.isButtonDown(1) ? 0b10 : 0) | (Mouse.isButtonDown(2) ? 0b100 : 0)));
+		}
 	}
 
 	public void initializeDevice()

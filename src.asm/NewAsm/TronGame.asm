@@ -52,6 +52,7 @@
 	{
 		int x
 		int y
+		byte buttons
 	}
 
 	RTCDevice
@@ -98,6 +99,16 @@
 		int color
 	}
 
+#mode macro
+	CallMethod(@MethodPointer)
+	{
+		stackPtr -> r1
+		ADD r1, r1, #sizeof(int)
+		stackPtr <- r1
+		ADD r1, r15, #24
+		stackPtr& <- r1
+		goto @MethodPointer
+	}
 #mode data
 	;cach device addresses
 	DeviceAddresses addr
@@ -153,12 +164,7 @@
 	stackPtr* -> r1
 	stackPtr <- r1
 
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #24
-	stackPtr& <- r1
-	goto :loadDeviceDescriptors:
+	CallMethod(:loadDeviceDescriptors:)
 
 	addr.mouseAddr -> r1
 	MOV r4, #0
@@ -169,12 +175,7 @@
 	while(r4 = r2)
 	randState <- r2
 
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #24
-	stackPtr& <- r1
-	goto :setupKeyboardInterrupt:
+	CallMethod(:setupKeyboardInterrupt:)
 
 	MOV r1, #5
 	player.x <- r1
@@ -194,26 +195,26 @@
 		ADD r1, r2, r1
 		mod1 <- r1
 
-		stackPtr -> r1
-		ADD r1, r1, #sizeof(int)
-		stackPtr <- r1
-		ADD r1, r15, #24
-		stackPtr& <- r1
-		goto :initEnemyCycle:
+		CallMethod(:initEnemyCycle:)
+		CallMethod(:renderLightCycle:)
 
 		ADD r5, r5, #1
 		numCycles -> r1
 	while(r5 != r1)
 
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:retsp:
-	stackPtr& <- r1
 	player* -> r1
 	mod1 <- r1
-	goto :initPlayerCycle:
-	:retsp:
+
+	CallMethod(:initPlayerCycle:)
+
+	CallMethod(:renderLightCycle:)
+
+	addr.mouseAddr -> r1
+	MOV r3, #1
+	do
+		MouseDevice[r1].buttons -> r2
+		AND r2, r2, #1
+	while(r2 != r3)
 
 	addr.rtcAddr -> r1
 
@@ -236,21 +237,8 @@
 		MOV r2, #1
 		LightCycle[r1].hasCrashed -> r1
 		if(r1 != r2)
-
-			stackPtr -> r1
-			ADD r1, r1, #sizeof(int)
-			stackPtr <- r1
-			ADD r1, r15, #24
-			stackPtr& <- r1
-			goto :runAITick:
-
-			stackPtr -> r1
-			ADD r1, r1, #sizeof(int)
-			stackPtr <- r1
-			ADD r1, r15, #24
-			stackPtr& <- r1
-			goto :moveLightCycle:
-
+			CallMethod(:runAITick:)
+			CallMethod(:moveLightCycle:)
 		end
 
 		iter -> r5
@@ -262,15 +250,9 @@
 	player.hasCrashed -> r1
 	MOV r2, #1
 	if(r2 != r1)
-		stackPtr -> r1
-		ADD r1, r1, #sizeof(int)
-		stackPtr <- r1
-		ADD r1, r15, #:retp:
-		stackPtr& <- r1
 		player* -> r1
 		mod1 <- r1
-		goto :moveLightCycle:
-		:retp:
+		CallMethod(:moveLightCycle:)
 	end
 
 	RET
@@ -291,12 +273,7 @@
 
 	goto :return:
 :initPlayerCycle:
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #24
-	stackPtr& <- r1
-	goto :generateRandom:
+	CallMethod(:generateRandom:)
 
 	genRand -> r1
 
@@ -311,12 +288,7 @@
 
 	goto :return:
 :initEnemyCycle:
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #24
-	stackPtr& <- r1
-	goto :generateRandom:
+	CallMethod(:generateRandom:)
 
 	mod1 -> r3
 
@@ -487,13 +459,7 @@
 	testX <- r2
 	testY <- r3
 
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:reta:
-	stackPtr& <- r1
-	goto :testForCrash:
-	:reta:
+	CallMethod(:testForCrash:)
 
 	mod2 -> r1
 	MOV r2, #1
@@ -526,13 +492,7 @@
 			testX <- r2
 			testY <- r3
 
-			stackPtr -> r1
-			ADD r1, r1, #sizeof(int)
-			stackPtr <- r1
-			ADD r1, r15, #:reta2:
-			stackPtr& <- r1
-			goto :testForCrash:
-			:reta2:
+			CallMethod(:testForCrash:)
 
 			MOV r1, #0
 			mod2 -> r2
@@ -605,13 +565,7 @@
 
 	goto :return:
 :moveLightCycle:
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:rett:
-	stackPtr& <- r1
-	goto :renderLightTrail:
-	:rett:
+	CallMethod(:renderLightTrail:)
 
 	mod1 -> r1
 	LightCycle[r1].x -> r2
@@ -641,13 +595,7 @@
 	LightCycle[r1].y <- r3
 	testY <- r3
 
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:retc:
-	stackPtr& <- r1
-	goto :testForCrash:
-	:retc:
+	CallMethod(:testForCrash:)
 
 	MOV r2, #1
 	mod2 -> r1
@@ -688,15 +636,9 @@
 
 	player.heading <- r1
 
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:ret11:
-	stackPtr& <- r1
 	player* -> r1
 	mod1 <- r1
-	goto :renderLightCycle:
-	:ret11:
+	CallMethod(:renderLightCycle:)
 
 	RET
 :renderLightTrail:
@@ -775,44 +717,28 @@
 
 	goto :return:
 :loadDeviceDescriptors:
-	;call findDeviceMod1, locate device with hash -1859106108 (VideoDevice) and store the address in mod1
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:retm:
-	stackPtr& <- r1
 	64: MOV r1, #-2068042898
 	mod1 <- r1
-	goto :findDeviceMod1:
-	:retm:
+
+	;call findDeviceMod1, locate device with hash -1859106108 (VideoDevice) and store the address in mod1
+	CallMethod(:findDeviceMod1:)
 
 	;store VideoDevice address in vidAddr
 	mod1 -> r1
 	addr.mouseAddr <- r1
 
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:retrtc:
-	stackPtr& <- r1
 	64: MOV r1, #-1017264500
 	mod1 <- r1
-	goto :findDeviceMod1:
-	:retrtc:
+	CallMethod(:findDeviceMod1:)
 
 	;store VideoDevice address in vidAddr
 	mod1 -> r1
 	addr.rtcAddr <- r1
 
 	;call findDeviceMod1, locate device with hash -1859106108 (VideoDevice) and store the address in mod1
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:ret3:
-	stackPtr& <- r1
 	64: MOV r1, #-1859106108
 	mod1 <- r1
-	goto :findDeviceMod1:
+	CallMethod(:findDeviceMod1:)
 	:ret3:
 
 	;store VideoDevice address in vidAddr
@@ -820,14 +746,9 @@
 	addr.vidAddr <- r1
 
 	;call findDeviceMod1, locate device with hash -2043936910 (InterruptController) and store the address in mod1
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:ret5:
-	stackPtr& <- r1
 	64: MOV r1, #-2043936910
 	mod1 <- r1
-	goto :findDeviceMod1:
+	CallMethod(:findDeviceMod1:)
 	:ret5:
 
 	;store VideoDevice address in vidAddr
@@ -835,14 +756,9 @@
 	addr.intAddr <- r1
 
 	;call findDeviceMod1, locate device with hash 1377772586 (KeyboardDevice) and store the address in mod1
-	stackPtr -> r1
-	ADD r1, r1, #sizeof(int)
-	stackPtr <- r1
-	ADD r1, r15, #:ret6:
-	stackPtr& <- r1
 	64: MOV r1, #1377772586
 	mod1 <- r1
-	goto :findDeviceMod1:
+	CallMethod(:findDeviceMod1:)
 	:ret6:
 
 	;store VideoDevice address in vidAddr
