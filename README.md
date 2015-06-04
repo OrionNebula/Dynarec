@@ -61,7 +61,7 @@ A realtime dynamic recompiler in Java. Translates binary assembly code into Java
  - Multiplies *Rarg1* by *arg2* and stores the result in register *Rres*; Done as floating point types
 - 64: DDIV Rres, Rarg1, #/Rarg2
  - Divides *Rarg1* by *arg2* and stores the result in register *Rres*; Done as floating point types
-- 64: B Roff, Rcmp1, Rcmp2, #cmpType
+- 64: B #/Roff, Rcmp1, Rcmp2, #cmpType
  - Executes a jump to an adress *off* bytes away, assuming *Rcmp1* and *Rcmp2* pass the condition described by *cmpType*
 - 64: DLN Rres, #/Rarg
  - Takes the natural log of *arg* and stores the result into *Rres*
