@@ -249,7 +249,7 @@
 	;Set up dots
 	64: MOV r1, #0xffc2a4
 	dot.color <- r1
-	MOV r1, #7 ;•
+	MOV r1, #7 ;ï¿½
 	dot.char <- r1
 
 	;Set up walls

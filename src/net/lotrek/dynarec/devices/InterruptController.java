@@ -20,6 +20,8 @@ public class InterruptController extends MemorySpaceDevice
 		{
 			if(((byte)instanceRegisters[1].getValue() >> 7 & 1) == 0) //add
 			{
+//				System.out.println("Added interrupt " + ((byte)instanceRegisters[1].getValue() & 0x7F) + " to address " + (int)instanceRegisters[2].getValue());
+				
 				if(monitorList.size() > ((byte)instanceRegisters[1].getValue() & 0x7F))
 					monitorList.set((byte)instanceRegisters[1].getValue() & 0x7F, new int[]{(int)instanceRegisters[2].getValue(), (byte)instanceRegisters[3].getValue()});
 				else

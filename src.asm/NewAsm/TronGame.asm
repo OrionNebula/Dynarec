@@ -110,7 +110,7 @@
 		goto @MethodPointer
 	}
 #mode data
-	;cach device addresses
+	;cache device addresses
 	DeviceAddresses addr
 
 	;Graphics interface vars
@@ -823,4 +823,3 @@
 	SUB r1, r1, #12
 	64: B r1, r0, r0, #0
 #data
-

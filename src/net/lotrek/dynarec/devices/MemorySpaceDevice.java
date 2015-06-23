@@ -9,7 +9,7 @@ public abstract class MemorySpaceDevice
 	
 	public MemorySpaceDevice()
 	{
-		System.out.println("Created device \"" + this.getClass().getSimpleName() + "\" with hashcode " + this.hashCode());
+		System.out.println("Created device \"" + this.getClass().getSimpleName() + "\" with hashcode " + Integer.toHexString(this.hashCode()));
 	}
 	
 	public void setProcessor(Processor proc)
