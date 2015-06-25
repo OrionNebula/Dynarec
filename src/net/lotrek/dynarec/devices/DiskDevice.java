@@ -66,7 +66,9 @@ public class DiskDevice extends MemorySpaceDevice
 				Register[] com = cmdStruct.getInstance(instance[1].getValue(Integer.class) + cmdStruct.getLength() * ringIndex, this.getProcessor().getMemory());
 				RandomAccessFile raf = diskRAFs[com[1].getValue(Byte.class)];
 				File file = diskFiles[com[1].getValue(Byte.class)];
-				switch(com[0].getValue(Byte.class))
+				Byte sw = com[0].getValue(Byte.class);
+				com[0].setValue(Byte.class, (byte)0);
+				switch(sw)
 				{
 				case 1:
 					Register[] meta = metaStruct.getInstance(com[3].getValue(Integer.class), this.getProcessor().getMemory());
@@ -87,7 +89,6 @@ public class DiskDevice extends MemorySpaceDevice
 					System.arraycopy(data, 0, this.getProcessor().getMemory(), com[3].getValue(Integer.class), data.length);
 					break;
 				}
-				com[0].setValue(Byte.class, (byte)0);
 				
 				ringIndex = (ringIndex + 1 < instance[2].getValue(Byte.class) ? ringIndex + 1 : 0);
 			}

@@ -18,7 +18,7 @@ import org.newdawn.slick.TrueTypeFont;
 
 public class VideoDevice extends MemorySpaceDevice
 {
-	public static final int RENDER_TEXT = 0, RENDER_RAW = 1, INITAL_WIDTH = 1280/2, INITIAL_HEIGHT = 960/2;
+	public static final int RENDER_TEXT = 0, RENDER_RAW = 1, INITAL_WIDTH = 1280, INITIAL_HEIGHT = 960;
 	
 	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class), pixelStructure = new Structure(Byte.class, Integer.class, Byte.class, Byte.class), queryStructure = new Structure(Byte.class, Integer.class);
 	private Register[] instanceRegisters;
@@ -115,14 +115,9 @@ public class VideoDevice extends MemorySpaceDevice
 			case RENDER_RAW:
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 				
-				/*for (int y = 0; y < screenText.length; y++)
-					for (int x = 0; x < screenText[y].length; x++)
-						font.drawString(x * (Display.getWidth() / 64), y * (Display.getHeight() / 32), "" + screenText[y][x], screenColors[y][x] == null ? Color.white : screenColors[y][x]);*/
 				
-				font.drawString(0, 0, "Drawing!");
 				
 				Display.update();
-				
 				break;
 			}
 			

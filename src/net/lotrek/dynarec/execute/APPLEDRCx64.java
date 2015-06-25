@@ -995,12 +995,12 @@ public class APPLEDRCx64 extends Processor
 				if(ret[0] == 0)
 				{
 					getRegisters()[15] -= 4;
-//					System.out.println(Arrays.toString(getRegisters()));
+					System.out.println(Arrays.toString(getRegisters()));
 					
 					setProcMode(0);
 					
-//					System.out.println("New HLT");
-//					System.out.println(Arrays.toString(getRegisters()));
+					System.out.println("New HLT");
+					System.out.println(Arrays.toString(getRegisters()));
 					
 					totExecTime += System.nanoTime() - time;
 					
