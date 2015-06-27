@@ -8,7 +8,11 @@ import net.lotrek.dynarec.execute.Processor;
 
 public class RealTimeClockDevice extends MemorySpaceDevice
 {
-	//id, command, address, period (millis)
+	/*
+	 * byte interruptId
+	 * byte command
+	 * int period (millis)
+	 */
 	private static final Structure rtcStruct = new Structure(Byte.class, Byte.class, Integer.class); 
 	private Register[] instance;
 	private ArrayList<Timer> events = new ArrayList<>();

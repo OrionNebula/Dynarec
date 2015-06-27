@@ -12,8 +12,6 @@ import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import net.lotrek.dynarec.execute.AppleAsm.InstructionAssembler;
-
 public class AppleAdvAsm implements Assembler {
 
 	public Class<? extends Processor> getProcessorType()
@@ -1158,5 +1156,10 @@ public class AppleAdvAsm implements Assembler {
 		{
 			return id;
 		}
+	}
+	
+	public static interface InstructionAssembler
+	{
+		public void assemble(String[] line, int header, DataOutputStream dos, boolean is64) throws IOException;
 	}
 }

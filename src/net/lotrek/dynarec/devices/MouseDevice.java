@@ -5,6 +5,11 @@ import org.lwjgl.opengl.Display;
 
 public class MouseDevice extends MemorySpaceDevice
 {
+	/*
+	 * int xPos
+	 * int yPos
+	 * byte buttons
+	 */
 	private static final Structure struct = new Structure(Integer.class, Integer.class, Byte.class);
 	private Register[] inst;
 	

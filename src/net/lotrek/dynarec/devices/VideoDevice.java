@@ -19,8 +19,25 @@ import org.newdawn.slick.TrueTypeFont;
 public class VideoDevice extends MemorySpaceDevice
 {
 	public static final int RENDER_TEXT = 0, RENDER_RAW = 1, INITAL_WIDTH = 1280, INITIAL_HEIGHT = 960;
-	
-	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class), pixelStructure = new Structure(Byte.class, Integer.class, Byte.class, Byte.class), queryStructure = new Structure(Byte.class, Integer.class);
+	/*
+	 * byte status - (0000 error code)(00 render mode -> text vs gl)(00 busy)
+	 * int width
+	 * int height
+	 * int instAddr - pointer to instruction block
+	 */
+	private Structure controlStructure = new Structure(Byte.class, Integer.class, Integer.class, Integer.class),
+			/*
+			 * byte mode
+			 * int data
+			 * byte x
+			 * byte y
+			 */
+			pixelStructure = new Structure(Byte.class, Integer.class, Byte.class, Byte.class),
+			/*
+			 * byte char
+			 * int color
+			 */
+			queryStructure = new Structure(Byte.class, Integer.class);
 	private Register[] instanceRegisters;
 	private TrueTypeFont font;
 	private int renderMode;

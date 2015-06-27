@@ -22,6 +22,7 @@ import net.lotrek.dynarec.devices.VideoDevice;
 import net.lotrek.dynarec.execute.APPLEDRCx64;
 import net.lotrek.dynarec.execute.APPLEDRCx64.InstructionWriter;
 import net.lotrek.dynarec.execute.AppleAdvAsm;
+import net.lotrek.dynarec.execute.Assembler;
 import net.lotrek.dynarec.execute.Processor;
 import net.lotrek.tools.MultiplexOutputStream;
 
@@ -68,6 +69,7 @@ public class DynarecTest
 			switch(arg)
 			{
 			case "--assemble":
+			{
 				String asmFile = args.poll(), output = args.poll();
 				try {
 					new AppleAdvAsm().assemble(new FileInputStream(new File(asmFile)), new FileOutputStream(new File(output)));
@@ -75,6 +77,20 @@ public class DynarecTest
 					e.printStackTrace();
 				}
 				break;
+			}
+			case "--adv-assemble":
+			{
+				String clazz = args.poll(), asmFile = args.poll(), output = args.poll();
+				Object inst;
+				try {
+					inst = Class.forName(clazz).newInstance();
+					System.out.println(inst instanceof Assembler ? "Attemping advanced assembly with \"" + inst.getClass().getName() + "\"" : "\"" + inst.getClass().getName() + "\" is not a valid Assembler; defaulting to AppleAdvAsm");
+					((Assembler)(inst instanceof Assembler ? inst : new AppleAdvAsm())).assemble(new FileInputStream(new File(asmFile)), new FileOutputStream(new File(output)));
+				} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | IOException e1) {
+					e1.printStackTrace();
+				}
+				break;
+			}
 			case "--engine":
 				globalKeys.put("engine", args.poll());
 				break;

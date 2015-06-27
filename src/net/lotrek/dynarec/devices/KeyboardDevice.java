@@ -6,7 +6,19 @@ import org.lwjgl.input.Keyboard;
 
 public class KeyboardDevice extends MemorySpaceDevice
 {
-	private Structure struct = new Structure(Byte.class, Byte.class, Integer.class, Integer.class, Integer.class), keyStroke = new Structure(Integer.class, Byte.class);
+	/*
+	 * byte swap - swaps between 1/0 on keypress
+	 * byte busy - indicates a command to be processed
+	 * int buffLen - length available to read
+	 * int readLen - length to read
+	 * int addr - address to read to
+	 */
+	private Structure struct = new Structure(Byte.class, Byte.class, Integer.class, Integer.class, Integer.class),
+			/*
+			 * int key
+			 * byte char
+			 */
+			keyStroke = new Structure(Integer.class, Byte.class);
 	private Register[] instanceRegisters;
 	private LinkedBlockingQueue<Object[]> keyboardData = new LinkedBlockingQueue<>();
 	

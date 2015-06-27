@@ -4,6 +4,11 @@ import java.util.ArrayList;
 
 public class InterruptController extends MemorySpaceDevice
 {
+	/*
+	 * byte status - (0000 -> error code)(0000 -> has record to process)
+	 * byte command - (0 = add, 1 = remove)(0000000 -> interrupt id)
+	 * byte regionLength - length of the region to watch in bytes (1-8)
+	 */
 	private Structure controlStructure = new Structure(Byte.class, Byte.class, Integer.class, Byte.class);
 	private Register[] instanceRegisters;
 	private ArrayList<int[]> monitorList = new ArrayList<>();
