@@ -10,10 +10,11 @@ public abstract class Processor
 	protected MemorySpaceDevice[] devices;
 	protected byte[] memory;
 	private int lastAllocationOffset;
+	private volatile boolean devicesInitialized;
 	private Runnable peripheralRunnable = () -> {
 		for (MemorySpaceDevice memorySpaceDevice : devices)
 			memorySpaceDevice.initializeDevice();
-		
+		devicesInitialized = true;
 		while(!Thread.currentThread().isInterrupted())
 			for (MemorySpaceDevice memorySpaceDevice : devices)
 				memorySpaceDevice.executeDeviceCycle();
@@ -54,7 +55,10 @@ public abstract class Processor
 	public final void startProcessor()
 	{
 		if(devices.length > 0)
+		{
 			peripheralThread.start();
+			while(!devicesInitialized);
+		}
 		
 		executeImpl();
 	}

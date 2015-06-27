@@ -135,7 +135,7 @@ public class VideoDevice extends MemorySpaceDevice
 		instanceRegisters[2].setValue(Integer.class, INITIAL_HEIGHT);
 		
 		try {
-			Display.setTitle(String.format("%s VideoDevice; %d bytes of memory; %d bytes usable", this.getProcessor().getClass().getSimpleName(), this.getProcessor().getMemorySize(), this.getProcessor().getAvailableMemory()));
+			Display.setTitle("Now Loading...");
 			Display.setDisplayMode(new DisplayMode(INITAL_WIDTH, INITIAL_HEIGHT));
 			Display.create();
 			Mouse.setGrabbed(true);
@@ -150,6 +150,7 @@ public class VideoDevice extends MemorySpaceDevice
 			e.printStackTrace();
 		}
 		
+		Display.setTitle(String.format("%s VideoDevice; %d bytes of memory; %d bytes usable", this.getProcessor().getClass().getSimpleName(), this.getProcessor().getMemorySize(), this.getProcessor().getAvailableMemory()));
 		System.out.println("Video Device initialized");
 	}
 

@@ -25,7 +25,7 @@ public class ClassGenerator
 		addConstPoolEntry(ConstPoolEntry.CONSTANT_Utf8, className + ".java");
 		addConstPoolEntry(ConstPoolEntry.CONSTANT_FieldMethodInterfaceMethodref, 10,3,12);
 		addConstPoolEntry(ConstPoolEntry.CONSTANT_NameAndType, 8,6);
-		addConstPoolEntry(ConstPoolEntry.CONSTANT_Utf8, "([J[B)[J");
+		addConstPoolEntry(ConstPoolEntry.CONSTANT_Utf8, "([J[BLnet/lotrek/dynarec/execute/Processor;)[J");
 	}
 	
 	public void setMaxLocals(int locals)

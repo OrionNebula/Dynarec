@@ -1,58 +1,104 @@
-[2015/06/24 21:01:02:342 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
-[2015/06/24 21:01:02:345 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DirectoryDevice with content [byte status, byte devCount, byte depStart, byte depLength, int depAddr]
-[2015/06/24 21:01:02:346 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DeviceEntry with content [int deviceHash, int deviceAddress, byte occupationLength]
-[2015/06/24 21:01:02:347 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskDevice with content [byte diskCt, int ringAddr, byte ringLength]
-[2015/06/24 21:01:02:347 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskCommand with content [byte mode, byte diskId, long diskSector, int memAddress]
-[2015/06/24 21:01:02:348 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DynamicLinker with content [int memSize, int entPtr, int stackPtr]
-[2015/06/24 21:01:02:349 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
-[2015/06/24 21:01:02:349 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable ent with type DeviceEntry[7]
-[2015/06/24 21:01:02:350 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable com with type DiskCommand
-[2015/06/24 21:01:02:351 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable stack with type int[16]
-[2015/06/24 21:01:02:352 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable memSize with type int
-[2015/06/24 21:01:02:352 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable data with type DynamicLinker
-[2015/06/24 21:01:02:353 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable toLoad with type byte[500]
-[2015/06/24 21:01:02:401 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
-[2015/06/24 21:01:02:465 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
-[2015/06/24 21:01:02:466 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DynamicLinker with content [int memSize, int entPtr, int stackPtr]
-[2015/06/24 21:01:02:466 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DeviceEntry with content [int deviceHash, int deviceAddress, byte occupationLength]
-[2015/06/24 21:01:02:467 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskDevice with content [byte diskCt, int ringAddr, byte ringLength]
-[2015/06/24 21:01:02:468 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskCommand with content [byte mode, byte diskId, long diskSector, int memAddress]
-[2015/06/24 21:01:02:469 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
-[2015/06/24 21:01:02:470 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable lnk with type DynamicLinker
-[2015/06/24 21:01:02:471 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
-[2015/06/24 21:01:02:472 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section macro
-[2015/06/24 21:01:02:472 AppleAdvAsm.generateMacros(AppleAdvAsm.java:161)] Defined macro AbsJump(@addr) with content:
+[2015/06/27 12:42:10:108 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
+[2015/06/27 12:42:10:113 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DirectoryDevice with content [byte status, byte devCount, byte depStart, byte depLength, int depAddr]
+[2015/06/27 12:42:10:114 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DeviceEntry with content [int deviceHash, int deviceAddress, byte occupationLength]
+[2015/06/27 12:42:10:116 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure VideoDevice with content [byte status, int width, int height, int instAddr]
+[2015/06/27 12:42:10:117 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure GraphicsCommand with content [byte mode, int data, byte x, byte y]
+[2015/06/27 12:42:10:117 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure IntCtrl with content [byte status, byte command, int toMonitor, byte regionLength]
+[2015/06/27 12:42:10:118 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure KeyboardDevice with content [byte swap, byte busy, int bufferLen, int readLen, int addr]
+[2015/06/27 12:42:10:120 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure MouseDevice with content [int x, int y, byte buttons]
+[2015/06/27 12:42:10:121 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure RTCDevice with content [byte id, byte command, int period]
+[2015/06/27 12:42:10:122 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure IVT with content [int monitorPtr, int rtcPtr]
+[2015/06/27 12:42:10:122 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure LightCycle with content [byte hasCrashed, byte x, byte y, byte heading, int color]
+[2015/06/27 12:42:10:123 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DeviceAddresses with content [int vidAddr, int intAddr, int keyAddr, int mouseAddr, int rtcAddr]
+[2015/06/27 12:42:10:124 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure Keystroke with content [int key, byte char]
+[2015/06/27 12:42:10:125 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure GraphicsQuery with content [byte char, int color]
+[2015/06/27 12:42:10:126 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section macro
+[2015/06/27 12:42:10:126 AppleAdvAsm.generateMacros(AppleAdvAsm.java:161)] Defined macro CallMethod(@MethodPointer) with content:
+stackPtr -> r1
+ADD r1, r1, #sizeof(int)
+stackPtr <- r1
+ADD r1, r15, #24
+stackPtr& <- r1
+goto @MethodPointer
+
+[2015/06/27 12:42:10:137 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
+[2015/06/27 12:42:10:138 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable addr with type DeviceAddresses
+[2015/06/27 12:42:10:139 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable comPtr with type int
+[2015/06/27 12:42:10:140 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable com with type GraphicsCommand
+[2015/06/27 12:42:10:141 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable color with type GraphicsCommand
+[2015/06/27 12:42:10:142 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable testFor with type GraphicsQuery
+[2015/06/27 12:42:10:142 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable key with type Keystroke
+[2015/06/27 12:42:10:143 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable player with type LightCycle
+[2015/06/27 12:42:10:144 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable numCycles with type byte
+[2015/06/27 12:42:10:145 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable enemies with type LightCycle[5]
+[2015/06/27 12:42:10:146 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable intTbl with type IVT
+[2015/06/27 12:42:10:146 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable testX with type byte
+[2015/06/27 12:42:10:147 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable testY with type byte
+[2015/06/27 12:42:10:148 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable randState with type long
+[2015/06/27 12:42:10:148 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable genRand with type int
+[2015/06/27 12:42:10:149 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable memSize with type int
+[2015/06/27 12:42:10:150 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable mod1 with type int
+[2015/06/27 12:42:10:150 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable mod2 with type int
+[2015/06/27 12:42:10:151 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable iter with type byte
+[2015/06/27 12:42:10:151 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable totCrashed with type byte
+[2015/06/27 12:42:10:152 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable stackPtr with type int
+[2015/06/27 12:42:10:153 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable returnStack with type int[16]
+[2015/06/27 12:42:10:153 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable entLoaded with type byte
+[2015/06/27 12:42:10:154 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable ent with type DeviceEntry[16]
+[2015/06/27 12:42:10:206 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
+[2015/06/27 12:42:10:397 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
+[2015/06/27 12:42:10:398 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DirectoryDevice with content [byte status, byte devCount, byte depStart, byte depLength, int depAddr]
+[2015/06/27 12:42:10:398 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DeviceEntry with content [int deviceHash, int deviceAddress, byte occupationLength]
+[2015/06/27 12:42:10:399 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskDevice with content [byte diskCt, int ringAddr, byte ringLength]
+[2015/06/27 12:42:10:400 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskCommand with content [byte mode, byte diskId, long diskSector, int memAddress]
+[2015/06/27 12:42:10:400 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DynamicLinker with content [int memSize, int entPtr, int stackPtr]
+[2015/06/27 12:42:10:401 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
+[2015/06/27 12:42:10:401 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable ent with type DeviceEntry[7]
+[2015/06/27 12:42:10:402 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable com with type DiskCommand
+[2015/06/27 12:42:10:402 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable stack with type int[16]
+[2015/06/27 12:42:10:403 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable memSize with type int
+[2015/06/27 12:42:10:403 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable data with type DynamicLinker
+[2015/06/27 12:42:10:404 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable toLoad with type byte[500]
+[2015/06/27 12:42:10:404 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
+[2015/06/27 12:42:10:423 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section defines
+[2015/06/27 12:42:10:423 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DynamicLinker with content [int memSize, int entPtr, int stackPtr]
+[2015/06/27 12:42:10:424 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DeviceEntry with content [int deviceHash, int deviceAddress, byte occupationLength]
+[2015/06/27 12:42:10:425 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskDevice with content [byte diskCt, int ringAddr, byte ringLength]
+[2015/06/27 12:42:10:425 AppleAdvAsm.generateDefines(AppleAdvAsm.java:187)] Defined structure DiskCommand with content [byte mode, byte diskId, long diskSector, int memAddress]
+[2015/06/27 12:42:10:426 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
+[2015/06/27 12:42:10:426 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable lnk with type DynamicLinker
+[2015/06/27 12:42:10:427 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
+[2015/06/27 12:42:10:428 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section macro
+[2015/06/27 12:42:10:429 AppleAdvAsm.generateMacros(AppleAdvAsm.java:161)] Defined macro AbsJump(@addr) with content:
 SUB r0, @addr, r15
 SUB r0, r0, #12
 64: B r0, r0, r0, #0
 
-[2015/06/24 21:01:02:477 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
-[2015/06/24 21:01:02:477 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable com with type DiskCommand[4]
-[2015/06/24 21:01:02:478 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable init with type byte[2048]
-[2015/06/24 21:01:02:479 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
-[2015/06/24 21:01:02:538 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "VideoDevice" with hashcode 91304ac4
-[2015/06/24 21:01:02:543 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "InterruptController" with hashcode 862bff72
-[2015/06/24 21:01:02:545 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "KeyboardDevice" with hashcode 521f242a
-[2015/06/24 21:01:02:547 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "MouseDevice" with hashcode 84bc2b6e
-[2015/06/24 21:01:02:551 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "RealTimeClockDevice" with hashcode c35dc68c
-[2015/06/24 21:01:02:555 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "DiskDevice" with hashcode 1d62abe0
-[2015/06/24 21:01:02:565 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "DirectoryDevice" with hashcode 686b55b6
-[2015/06/24 21:01:04:482 VideoDevice.initializeDevice(VideoDevice.java:153)] Video Device initialized
-[2015/06/24 21:01:04:483 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.DirectoryDevice: 8184
-[2015/06/24 21:01:04:484 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.VideoDevice: 8171
-[2015/06/24 21:01:04:485 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.InterruptController: 8164
-[2015/06/24 21:01:04:485 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.KeyboardDevice: 8150
-[2015/06/24 21:01:04:486 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.MouseDevice: 8141
-[2015/06/24 21:01:04:487 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.RealTimeClockDevice: 8135
-[2015/06/24 21:01:04:487 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.DiskDevice: 8129
-[2015/06/24 21:01:04:511 DiskDevice.executeDeviceCycle(DiskDevice.java:86)] Read: 0
-[2015/06/24 21:01:04:519 DiskDevice.executeDeviceCycle(DiskDevice.java:86)] Read: 512
-[2015/06/24 21:01:04:523 DiskDevice.executeDeviceCycle(DiskDevice.java:86)] Read: 1024
-[2015/06/24 21:01:04:526 DiskDevice.executeDeviceCycle(DiskDevice.java:86)] Read: 1536
-[2015/06/24 21:01:04:530 DiskDevice.executeDeviceCycle(DiskDevice.java:86)] Read: 2048
-Exception in thread "main" [2015/06/24 21:01:04:536 Throwable$WrappedPrintStream.println(Unknown Source)] java.lang.ArrayIndexOutOfBoundsException: 8192
-[2015/06/24 21:01:04:536 Throwable$WrappedPrintStream.println(Unknown Source)] 	at net.lotrek.dynarec.devices.Register.getTypeForBytes(Register.java:72)
-[2015/06/24 21:01:04:537 Throwable$WrappedPrintStream.println(Unknown Source)] 	at net.lotrek.dynarec.execute.APPLEDRCx64.hashCodeSegment(APPLEDRCx64.java:1468)
-[2015/06/24 21:01:04:537 Throwable$WrappedPrintStream.println(Unknown Source)] 	at net.lotrek.dynarec.execute.APPLEDRCx64.executeImpl(APPLEDRCx64.java:852)
-[2015/06/24 21:01:04:538 Throwable$WrappedPrintStream.println(Unknown Source)] 	at net.lotrek.dynarec.execute.Processor.startProcessor(Processor.java:59)
-[2015/06/24 21:01:04:539 Throwable$WrappedPrintStream.println(Unknown Source)] 	at net.lotrek.dynarec.DynarecTest.main(DynarecTest.java:59)
+[2015/06/27 12:42:10:429 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section data
+[2015/06/27 12:42:10:430 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable com with type DiskCommand[4]
+[2015/06/27 12:42:10:431 AppleAdvAsm.generateData(AppleAdvAsm.java:105)] Defined variable init with type byte[2048]
+[2015/06/27 12:42:10:431 AppleAdvAsm.assemble(AppleAdvAsm.java:67)] Encountered section text
+[2015/06/27 12:42:10:496 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "VideoDevice" with hashcode 91304ac4
+[2015/06/27 12:42:10:501 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "InterruptController" with hashcode 862bff72
+[2015/06/27 12:42:10:504 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "KeyboardDevice" with hashcode 521f242a
+[2015/06/27 12:42:10:506 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "MouseDevice" with hashcode 84bc2b6e
+[2015/06/27 12:42:10:511 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "RealTimeClockDevice" with hashcode c35dc68c
+[2015/06/27 12:42:10:516 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "DiskDevice" with hashcode 1d62abe0
+[2015/06/27 12:42:10:525 MemorySpaceDevice.<init>(MemorySpaceDevice.java:12)] Created device "DirectoryDevice" with hashcode 686b55b6
+[2015/06/27 12:42:12:369 VideoDevice.initializeDevice(VideoDevice.java:154)] Video Device initialized
+[2015/06/27 12:42:12:392 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.DirectoryDevice: 8184
+[2015/06/27 12:42:12:393 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.VideoDevice: 8171
+[2015/06/27 12:42:12:394 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.InterruptController: 8164
+[2015/06/27 12:42:12:395 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.KeyboardDevice: 8150
+[2015/06/27 12:42:12:396 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.MouseDevice: 8141
+[2015/06/27 12:42:12:396 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.RealTimeClockDevice: 8135
+[2015/06/27 12:42:12:397 DirectoryDevice.executeDeviceCycle(DirectoryDevice.java:46)] net.lotrek.dynarec.devices.DiskDevice: 8129
+[2015/06/27 12:42:13:581 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1010)] [4452, 8135, 1, 1, 0, 4, 0, 0, 0, 0, 0, 0, 4549, 0, 0, 684]
+[2015/06/27 12:42:13:581 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1014)] New HLT
+[2015/06/27 12:42:13:582 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1015)] [4452, 8135, 1, 1, 0, 4, 0, 0, 0, 0, 0, 0, 4549, 0, 0, 684]
+[2015/06/27 12:42:13:621 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1010)] [4452, 8135, 1, 1, 0, 4, 0, 0, 0, 0, 0, 0, 4549, 0, 0, 684]
+[2015/06/27 12:42:13:621 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1014)] New HLT
+[2015/06/27 12:42:13:622 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1015)] [4452, 8135, 1, 1, 0, 4, 0, 0, 0, 0, 0, 0, 4549, 0, 0, 684]
+[2015/06/27 12:42:31:908 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1010)] [4452, 8135, 1, 0, 32, 4, 4, 0, 0, 0, 0, 0, 0, 1, 0, 1972]
+[2015/06/27 12:42:31:909 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1014)] New HLT
+[2015/06/27 12:42:31:909 APPLEDRCx64.executeImpl(APPLEDRCx64.java:1015)] [4452, 8135, 1, 1, 0, 4, 0, 0, 0, 0, 0, 0, 4549, 0, 0, 684]

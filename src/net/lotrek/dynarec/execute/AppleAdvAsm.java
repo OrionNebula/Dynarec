@@ -119,23 +119,23 @@ public class AppleAdvAsm implements Assembler {
 					 intVal = Float.floatToRawIntBits(Float.parseFloat(structDef.split("=")[1].trim()));
 				case "int":
 					intVal = intVal == 0 ? Integer.parseInt(structDef.split("=")[1].trim()) : intVal;
-					for (int i = 0; i < 4; i++)
-						dataPostfix += String.format("{%s}\n", Integer.toHexString((intVal >> 8*i) & 0xff));
+					for (int i = 3; i >= 0; i--)
+						dataPostfix += String.format("{%s}\n", Integer.toString((intVal >> 8*i) & 0xff));
 					break;
 				case "double":
 					 longVal = Double.doubleToRawLongBits(Double.parseDouble(structDef.split("=")[1].trim()));
 				case "long":
 					longVal = longVal == 0 ? Long.parseLong(structDef.split("=")[1].trim()) : longVal;
-					for (int i = 0; i < 8; i++)
-						dataPostfix += String.format("{%s}\n", Long.toHexString((longVal >> 8*i) & 0xff));
+					for (int i = 7; i >= 0; i--)
+						dataPostfix += String.format("{%s}\n", Long.toString((longVal >> 8*i) & 0xff));
 					break;
 				case "short":
 					short shortVal = Short.parseShort(structDef.split("=")[1].trim());
-					for (int i = 0; i < 2; i++)
-						dataPostfix += String.format("{%s}\n", Integer.toHexString((shortVal >> 8*i) & 0xff));
+					for (int i = 1; i >= 0; i--)
+						dataPostfix += String.format("{%s}\n", Integer.toString((shortVal >> 8*i) & 0xff));
 					break;
 				case "byte":
-					dataPostfix += String.format("{%s}\n", Integer.toHexString((Byte.parseByte(structDef.split("=")[1].trim())) & 0xff));
+					dataPostfix += String.format("{%s}\n", Integer.toString((Byte.parseByte(structDef.split("=")[1].trim())) & 0xff));
 					break;
 				}
 			}
@@ -401,7 +401,7 @@ public class AppleAdvAsm implements Assembler {
 				continue;
 			}
 			
-			if(line.matches("\\{0x[0-9A-F]+\\}"))
+			if(line.matches("\\{\\d+\\}"))
 			{
 				off += 1;
 				continue;
@@ -432,9 +432,9 @@ public class AppleAdvAsm implements Assembler {
 				continue;
 			}
 			
-			if(line.matches("\\{0x[0-9A-F]+\\}"))
+			if(line.matches("\\{\\d+\\}"))
 			{
-				dos.write(Integer.parseInt(line.replaceAll("\\{|\\}|0x", ""), 16));
+				dos.write(Integer.parseInt(line.replaceAll("\\{|\\}", "")));
 				globOff += 1;
 				continue;
 			}
@@ -1129,6 +1129,10 @@ public class AppleAdvAsm implements Assembler {
 				dos.writeFloat(Float.parseFloat(line[3].replace("#","")));
 			else
 				dos.writeInt(Integer.parseInt(line[3].replace("R","")) & 0xf);
+		}),
+		SVC(30, (line, head, dos, is64)->{
+			dos.writeShort(head);
+			dos.writeShort(Integer.parseInt(line[2].replace("#","")));
 		}),
 		;
 		

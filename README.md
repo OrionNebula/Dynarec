@@ -47,7 +47,8 @@ A realtime dynamic recompiler in Java. Translates binary assembly code into Java
  - Performs a bitwise exclusive or on *Rarg1* and the value at *val* and stores the result into register
 - RET
  - Returns the processor from an interrupted state
-
+- SVC #int
+ - Triggers interrupt *int*
 ###64 bit instructions
 - 64: MOV Rres, #/Rarg
  - Stores 32-bit value *arg* into register *res*, intended for literals

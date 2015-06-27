@@ -56,7 +56,6 @@ public class DiskDevice extends MemorySpaceDevice
 		return ctrlStruct.getLength();
 	}
 
-	//TODO: make not broken
 	public void executeDeviceCycle()
 	{
 		try {

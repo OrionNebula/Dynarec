@@ -749,6 +749,17 @@ public class APPLEDRCx64 extends Processor
 			
 			return len;
 		},
+		(linst, gen) -> { //SVC
+			gen.addBytecode(Bytecode.aload_3);
+			
+			gen.addBytecode(Bytecode.ldc, getConstant(gen, "I"+(linst & 0xffff), ConstPoolEntry.CONSTANT_Integer, (int)(linst & 0xffff)));
+			gen.addBytecode(Bytecode.iconst_0);
+			gen.addBytecode(Bytecode.newarray, 11);
+			
+			gen.addBytecode(Bytecode.invokevirtual, 0, getConstant(gen, "interrupt METHOD", ConstPoolEntry.CONSTANT_FieldMethodInterfaceMethodref, 10, getConstant(gen, "net/lotrek/dynarec/execute/Processor CLASS", ConstPoolEntry.CONSTANT_Class, getConstant(gen, "net/lotrek/dynarec/execute/Processor", ConstPoolEntry.CONSTANT_Utf8, "net/lotrek/dynarec/execute/Processor")), getConstant(gen, "interrupt NAMETYPE", ConstPoolEntry.CONSTANT_NameAndType, getConstant(gen, "interrupt", ConstPoolEntry.CONSTANT_Utf8, "interrupt"), getConstant(gen, "(I[J)V", ConstPoolEntry.CONSTANT_Utf8, "(I[J)V"))));
+			
+			return 0;
+		},
 	};
 	
 	public APPLEDRCx64(int memorySize, byte[] biosImage,
@@ -856,7 +867,7 @@ public class APPLEDRCx64 extends Processor
 				try {
 //					registers[15] += sh[1];
 					
-					long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], getRegisters(), getMemory()));
+					long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], getRegisters(), getMemory(), this));
 //					System.out.println(Arrays.toString(ret));
 					if(ret[0] == 0)
 					{
@@ -868,6 +879,7 @@ public class APPLEDRCx64 extends Processor
 						
 						totExecTime += System.nanoTime() - time;
 						
+						if(interruptQueue.isEmpty())
 						synchronized (lock) {
 							try {
 								isHalted = true;
@@ -990,20 +1002,21 @@ public class APPLEDRCx64 extends Processor
 				Class<?> clazz = bacl.loadClass("ClassGen0x" + Integer.toHexString(addr) + Integer.toHexString(sh[0]), b, 0, b.length);
 				compiledSegments.put(sh[0], new Object[]{clazz.newInstance(), clazz.getDeclaredMethods()[0]});
 //				registers[15] += sh[1];
-				long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], getRegisters(), getMemory()));
+				long[] ret = ((long[])((Method) compiledSegments.get(sh[0])[1]).invoke(compiledSegments.get(sh[0])[0], getRegisters(), getMemory(), this));
 //				System.out.println(Arrays.toString(ret));
 				if(ret[0] == 0)
 				{
 					getRegisters()[15] -= 4;
-					System.out.println(Arrays.toString(getRegisters()));
+//					System.out.println(Arrays.toString(getRegisters()));
 					
 					setProcMode(0);
 					
-					System.out.println("New HLT");
-					System.out.println(Arrays.toString(getRegisters()));
+//					System.out.println("New HLT");
+//					System.out.println(Arrays.toString(getRegisters()));
 					
 					totExecTime += System.nanoTime() - time;
 					
+					if(interruptQueue.isEmpty())
 					synchronized (lock) {
 						try {
 							isHalted = true;
@@ -1131,7 +1144,7 @@ public class APPLEDRCx64 extends Processor
 		setStackVarSize(8, 4);
 		
 		gen.addBytecode(Bytecode.l2i);
-		gen.addBytecode(Bytecode.istore_3);
+		gen.addBytecode(Bytecode.istore, 4);
 		
 		for (int i = 1; i <= 4; i++)
 		{
@@ -1153,10 +1166,10 @@ public class APPLEDRCx64 extends Processor
 			gen.addBytecode(Bytecode.dup_x1);
 			gen.addBytecode(Bytecode.pop);
 			
-			gen.addBytecode(Bytecode.iload_3);
+			gen.addBytecode(Bytecode.iload, 4);
 			gen.addBytecode(Bytecode.dup);
-			gen.addBytecode(Bytecode.istore_3);
-			gen.addBytecode(Bytecode.iinc, 3, 1);
+			gen.addBytecode(Bytecode.istore, 4);
+			gen.addBytecode(Bytecode.iinc, 4, 1);
 			gen.addBytecode(Bytecode.dup_x1);
 			gen.addBytecode(Bytecode.pop);
 			
@@ -1177,16 +1190,16 @@ public class APPLEDRCx64 extends Processor
 		setStackVarSize(10, 4);
 		
 		gen.addBytecode(Bytecode.l2i);
-		gen.addBytecode(Bytecode.istore_3);
+		gen.addBytecode(Bytecode.istore, 4);
 		gen.addBytecode(Bytecode.lconst_0);
 		
 		for (int i = 1; i <= 4; i++)
 		{
 			gen.addBytecode(Bytecode.aload_2);
-			gen.addBytecode(Bytecode.iload_3);
+			gen.addBytecode(Bytecode.iload, 4);
 			gen.addBytecode(Bytecode.dup);
-			gen.addBytecode(Bytecode.istore_3);
-			gen.addBytecode(Bytecode.iinc, 3, 1);
+			gen.addBytecode(Bytecode.istore, 4);
+			gen.addBytecode(Bytecode.iinc, 4, 1);
 			
 			gen.addBytecode(Bytecode.baload); //load first byte
 			gen.addBytecode(Bytecode.i2l);
@@ -1229,16 +1242,16 @@ public class APPLEDRCx64 extends Processor
 		setStackVarSize(10, 4);
 		
 		gen.addBytecode(Bytecode.l2i);
-		gen.addBytecode(Bytecode.istore_3);
+		gen.addBytecode(Bytecode.istore, 4);
 		gen.addBytecode(Bytecode.lconst_0);
 		
 		for (int i = 1; i <= 8; i++)
 		{
 			gen.addBytecode(Bytecode.aload_2);
-			gen.addBytecode(Bytecode.iload_3);
+			gen.addBytecode(Bytecode.iload, 4);
 			gen.addBytecode(Bytecode.dup);
-			gen.addBytecode(Bytecode.istore_3);
-			gen.addBytecode(Bytecode.iinc, 3, 1);
+			gen.addBytecode(Bytecode.istore, 4);
+			gen.addBytecode(Bytecode.iinc, 4, 1);
 			
 			gen.addBytecode(Bytecode.baload); //load first byte
 			gen.addBytecode(Bytecode.i2l);
@@ -1266,10 +1279,10 @@ public class APPLEDRCx64 extends Processor
 		setStackVarSize(10, 4);
 		
 		gen.addBytecode(Bytecode.l2i);
-		gen.addBytecode(Bytecode.istore_3);
+		gen.addBytecode(Bytecode.istore, 4);
 		
 		gen.addBytecode(Bytecode.aload_2);
-		gen.addBytecode(Bytecode.iload_3);
+		gen.addBytecode(Bytecode.iload, 4);
 		
 		gen.addBytecode(Bytecode.baload); //load first byte
 		gen.addBytecode(Bytecode.i2l);
@@ -1283,7 +1296,7 @@ public class APPLEDRCx64 extends Processor
 		setStackVarSize(8, 4);
 		
 		gen.addBytecode(Bytecode.l2i);
-		gen.addBytecode(Bytecode.istore_3);
+		gen.addBytecode(Bytecode.istore, 4);
 		
 		gen.addBytecode(Bytecode.l2i);
 		gen.addBytecode(Bytecode.i2b);
@@ -1292,7 +1305,7 @@ public class APPLEDRCx64 extends Processor
 		gen.addBytecode(Bytecode.dup_x1);
 		gen.addBytecode(Bytecode.pop);
 		
-		gen.addBytecode(Bytecode.iload_3);
+		gen.addBytecode(Bytecode.iload, 4);
 		gen.addBytecode(Bytecode.dup_x1);
 		gen.addBytecode(Bytecode.pop);
 		
@@ -1308,7 +1321,7 @@ public class APPLEDRCx64 extends Processor
 		setStackVarSize(8, 4);
 		
 		gen.addBytecode(Bytecode.l2i);
-		gen.addBytecode(Bytecode.istore_3);
+		gen.addBytecode(Bytecode.istore, 4);
 		
 		for (int i = 1; i <= 8; i++)
 		{
@@ -1330,10 +1343,10 @@ public class APPLEDRCx64 extends Processor
 			gen.addBytecode(Bytecode.dup_x1);
 			gen.addBytecode(Bytecode.pop);
 			
-			gen.addBytecode(Bytecode.iload_3);
+			gen.addBytecode(Bytecode.iload, 4);
 			gen.addBytecode(Bytecode.dup);
-			gen.addBytecode(Bytecode.istore_3);
-			gen.addBytecode(Bytecode.iinc, 3, 1);
+			gen.addBytecode(Bytecode.istore, 4);
+			gen.addBytecode(Bytecode.iinc, 4, 1);
 			gen.addBytecode(Bytecode.dup_x1);
 			gen.addBytecode(Bytecode.pop);
 			
@@ -1417,7 +1430,7 @@ public class APPLEDRCx64 extends Processor
 		
 		setStackVarSize(4, 5);
 		
-		gen.addBytecode(Bytecode.lstore_3);
+		gen.addBytecode(Bytecode.lstore, 4);
 		gen.addBytecode(Bytecode.aload_1);
 		
 		switch(regindex)
@@ -1453,7 +1466,7 @@ public class APPLEDRCx64 extends Processor
 				break;
 		}
 		
-		gen.addBytecode(Bytecode.lload_3);
+		gen.addBytecode(Bytecode.lload, 4);
 		gen.addBytecode(Bytecode.lastore);
 		
 		return toReturn;
