@@ -9,7 +9,7 @@ import net.lotrek.dynarec.execute.Processor;
 public class RealTimeClockDevice extends MemorySpaceDevice
 {
 	/*
-	 * byte interruptId
+	 * byte itemID
 	 * byte command
 	 * int period (millis)
 	 */
@@ -46,6 +46,12 @@ public class RealTimeClockDevice extends MemorySpaceDevice
 	public void initializeDevice()
 	{
 		instance = rtcStruct.getInstance(getOccupationAddr(), this.getProcessor().getMemory());
+	}
+	
+	public void disposeDevice()
+	{
+		for (Timer timer : events)
+			timer.cancel();
 	}
 	
 	private static class InterruptTask extends TimerTask

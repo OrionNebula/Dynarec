@@ -18,6 +18,9 @@ public abstract class Processor
 		while(!Thread.currentThread().isInterrupted())
 			for (MemorySpaceDevice memorySpaceDevice : devices)
 				memorySpaceDevice.executeDeviceCycle();
+		for (MemorySpaceDevice memorySpaceDevice : devices) {
+			memorySpaceDevice.disposeDevice();
+		}
 	};
 	private Thread peripheralThread = new Thread(peripheralRunnable);
 	
@@ -52,7 +55,7 @@ public abstract class Processor
 		return getMemorySize() - lastAllocationOffset;
 	}
 	
-	public final void startProcessor()
+	public final boolean startProcessor()
 	{
 		if(devices.length > 0)
 		{
@@ -60,18 +63,19 @@ public abstract class Processor
 			while(!devicesInitialized);
 		}
 		
-		executeImpl();
-	}
-
-	public final void terminateProcessor()
-	{
-		peripheralThread.interrupt();
+		boolean toReturn = executeImpl();
 		try {
+			peripheralThread.interrupt();
 			peripheralThread.join();
-			terminateImpl();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		return toReturn;
+	}
+
+	public final void terminateProcessor(boolean shouldReboot)
+	{
+		terminateImpl(shouldReboot);
 	}
 	
 	public final int getMemoryDeviceCount()
@@ -84,8 +88,8 @@ public abstract class Processor
 		return devices[id];
 	}
 	
-	protected abstract void terminateImpl();
-	protected abstract void executeImpl();
+	protected abstract void terminateImpl(boolean shouldReboot);
+	protected abstract boolean executeImpl();
 	public abstract void interrupt(int index, long...parameters);
 	public abstract void startDebugPane();
 	public abstract JPanel getPanelForDevice(MemorySpaceDevice dev);

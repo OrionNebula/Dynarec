@@ -102,4 +102,14 @@ public class DiskDevice extends MemorySpaceDevice
 		instance = ctrlStruct.getInstance(getOccupationAddr(), this.getProcessor().getMemory());
 		instance[0].setValue(Byte.class, (byte)diskFiles.length);
 	}
+	
+	public void disposeDevice()
+	{
+		for (RandomAccessFile file : diskRAFs)
+			try {
+				file.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	}
 }

@@ -62,6 +62,20 @@
 		int period
 	}
 
+	ACPIDevice
+  {
+    byte status
+    int cmdAddr
+    long launchTime
+    long currentTime
+  }
+
+  ACPICommand
+  {
+    byte mode
+    int data
+  }
+
 	;Custom Structures
 	IVT
 	{
@@ -85,6 +99,7 @@
 		int keyAddr
 		int mouseAddr
 		int rtcAddr
+		int acpiAddr
 	}
 
 	Keystroke
@@ -118,6 +133,8 @@
 	GraphicsCommand com
 	GraphicsCommand color
 	GraphicsQuery testFor
+
+	ACPICommand acpiCom
 
 	Keystroke key
 
@@ -429,6 +446,20 @@
 		RTCDevice[r1].command <- r2
 		RTCDevice[r1].id <- r2
 
+		addr.mouseAddr -> r1
+		MOV r3, #1
+		do
+			MouseDevice[r1].buttons -> r2
+			AND r2, r2, #1
+		while(r2 != r3)
+
+		addr.acpiAddr -> r1
+		acpiCom* -> r2
+		ACPIDevice[r1].cmdAddr <- r2
+		MOV r2, #1
+		acpiCom.mode <- r2
+		ACPIDevice[r1].status <- r2
+
 		HLT
 	end
 
@@ -739,7 +770,6 @@
 	64: MOV r1, #-1859106108
 	mod1 <- r1
 	CallMethod(:findDeviceMod1:)
-	:ret3:
 
 	;store VideoDevice address in vidAddr
 	mod1 -> r1
@@ -749,7 +779,6 @@
 	64: MOV r1, #-2043936910
 	mod1 <- r1
 	CallMethod(:findDeviceMod1:)
-	:ret5:
 
 	;store VideoDevice address in vidAddr
 	mod1 -> r1
@@ -759,11 +788,18 @@
 	64: MOV r1, #1377772586
 	mod1 <- r1
 	CallMethod(:findDeviceMod1:)
-	:ret6:
 
 	;store VideoDevice address in vidAddr
 	mod1 -> r1
 	addr.keyAddr <- r1
+
+	;call findDeviceMod1, locate device with hash 0x686b55b6 (APCIDevice) and store the address in mod1
+	64: MOV r1, #0x400dd3e
+	mod1 <- r1
+	CallMethod(:findDeviceMod1:)
+
+	mod1 -> r1
+	addr.acpiAddr <- r1
 
 	goto :return:
 :findDeviceMod1:

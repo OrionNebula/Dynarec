@@ -33,4 +33,5 @@ public class MouseDevice extends MemorySpaceDevice
 		inst = struct.getInstance(getOccupationAddr(), this.getProcessor().getMemory());
 	}
 
+	public void disposeDevice(){}
 }

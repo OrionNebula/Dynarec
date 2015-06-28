@@ -40,4 +40,5 @@ public abstract class MemorySpaceDevice
 	public abstract int getOccupationLength();
 	public abstract void executeDeviceCycle();
 	public abstract void initializeDevice();
+	public abstract void disposeDevice();
 }

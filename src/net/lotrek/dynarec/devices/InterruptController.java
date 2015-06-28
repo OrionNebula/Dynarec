@@ -63,5 +63,7 @@ public class InterruptController extends MemorySpaceDevice
 	{
 		instanceRegisters = controlStructure.getInstance(getOccupationAddr(), this.getProcessor().getMemory());
 	}
+	
+	public void disposeDevice(){}
 
 }

@@ -170,5 +170,10 @@ public class VideoDevice extends MemorySpaceDevice
 		Display.setTitle(String.format("%s VideoDevice; %d bytes of memory; %d bytes usable", this.getProcessor().getClass().getSimpleName(), this.getProcessor().getMemorySize(), this.getProcessor().getAvailableMemory()));
 		System.out.println("Video Device initialized");
 	}
+	
+	public void disposeDevice()
+	{
+		Display.destroy();
+	}
 
 }

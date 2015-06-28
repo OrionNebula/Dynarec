@@ -29,7 +29,7 @@ public class APPLEDRCx64 extends Processor
 	private HashMap<Integer, Object[]> compiledSegments = new HashMap<>();
 	private static final int PC = 15, LR = 14, ProcMode = 13, IVT = 12;
 	private long[][] registers = new long[2][16];
-	private volatile boolean shouldTerm, isHalted;
+	private volatile boolean shouldTerm, shouldReboot;
 	private int stackSize = 10, varSize = 10;
 	private long totExecTime, totExecFrames, totNewFrames, totInst;
 	private HashMap<MemorySpaceDevice, JPanel> panelList = new HashMap<>();
@@ -878,7 +878,7 @@ public class APPLEDRCx64 extends Processor
 		return getPanelForDevice(dev);
 	}
 
-	protected void executeImpl()
+	protected boolean executeImpl()
 	{
 		for(long[] reg : registers)
 			reg[1] = this.getMemorySize();
@@ -908,7 +908,6 @@ public class APPLEDRCx64 extends Processor
 						if(interruptQueue.isEmpty())
 						synchronized (lock) {
 							try {
-								isHalted = true;
 								lock.wait();
 								if(shouldTerm)
 									break;
@@ -916,8 +915,6 @@ public class APPLEDRCx64 extends Processor
 								e.printStackTrace();
 							}
 						}
-						
-						isHalted = false;
 						
 						Object[] inter = interruptQueue.poll();
 						Register toJump = new Register(Integer.class, (int) getRegisters()[IVT] + 4*(int)inter[0], this.getMemory());
@@ -1045,7 +1042,6 @@ public class APPLEDRCx64 extends Processor
 					if(interruptQueue.isEmpty())
 					synchronized (lock) {
 						try {
-							isHalted = true;
 							lock.wait();
 							if(shouldTerm)
 								break;
@@ -1053,8 +1049,6 @@ public class APPLEDRCx64 extends Processor
 							e.printStackTrace();
 						}
 					}
-					
-					isHalted = false;
 					
 					Object[] inter = interruptQueue.poll();
 					Register toJump = new Register(Integer.class, (int) getRegisters()[IVT] + 4*(int)inter[0], this.getMemory());
@@ -1098,6 +1092,7 @@ public class APPLEDRCx64 extends Processor
 						compOp = ">=";
 					break;
 				}
+
 //				System.out.printf("%d : %s : %d | %s\n", ret[1], compOp, ret[2], Arrays.toString(getRegisters()));
 //				System.out.println("New " + ret[0] + " : " + addr + " : " + sh[0]);
 				getRegisters()[15] += ret[0];
@@ -1121,11 +1116,17 @@ public class APPLEDRCx64 extends Processor
 				e.printStackTrace();
 			}
 		}
+		
+		return shouldReboot;
 	}
 	
-	protected void terminateImpl()
+	protected void terminateImpl(boolean shouldReboot)
 	{
+		this.shouldReboot = shouldReboot;
 		shouldTerm = true;
+		synchronized (lock) {
+			lock.notify();
+		}
 	}
 
 	public void interrupt(int index, long...parameters)

@@ -13,6 +13,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import net.lotrek.dynarec.ClassGenerator.Bytecode;
 import net.lotrek.dynarec.ClassGenerator.ConstPoolEntry;
 import net.lotrek.dynarec.ClassGenerator.ConstPoolProvider;
+import net.lotrek.dynarec.devices.ACPIDevice;
 import net.lotrek.dynarec.devices.DiskDevice;
 import net.lotrek.dynarec.devices.InterruptController;
 import net.lotrek.dynarec.devices.KeyboardDevice;
@@ -46,18 +47,23 @@ public class DynarecTest
 		forceInit(APPLEDRCx64.class);
 		forceInit(InstructionWriter.class);
 		
-		Processor proc = null;
-		try {
-			proc = (Processor) Class.forName(globalKeys.get("engine")).newInstance();
-		} catch (Exception e1) {
+		while(true)
+		{
+			Processor proc = null;
 			try {
-				proc = new APPLEDRCx64(Integer.parseInt(globalKeys.getOrDefault("ram", "1024")), globalKeys.containsKey("bios") ? MultiplexOutputStream.readFully(new FileInputStream(new File(globalKeys.get("bios"))), true) : new byte[0], new VideoDevice(), new InterruptController(), new KeyboardDevice(), new MouseDevice(), new RealTimeClockDevice(), new DiskDevice(new File("disk.bin")));
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+				proc = (Processor) Class.forName(globalKeys.get("engine")).newInstance();
+			} catch (Exception e1) {
+				try {
+					proc = new APPLEDRCx64(Integer.parseInt(globalKeys.getOrDefault("ram", "1024")), globalKeys.containsKey("bios") ? MultiplexOutputStream.readFully(new FileInputStream(new File(globalKeys.get("bios"))), true) : new byte[0], new VideoDevice(), new InterruptController(), new KeyboardDevice(), new MouseDevice(), new RealTimeClockDevice(), new DiskDevice(new File("disk.bin")), new ACPIDevice());
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
 			}
+			
+			if(!proc.startProcessor())
+				break;
+			System.gc();
 		}
-		
-		proc.startProcessor();
 	}
 	
 	private static void processArgs(Queue<String> args)
