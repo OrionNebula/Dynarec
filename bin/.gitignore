@@ -1,14 +1,4 @@
-/NewAsm/
-/OldAsm/
-/SymbolLambda/
-/net/
-/AdvDisplayBlock.asm
-/DeviceDirectoryTest.asm
-/DiskTest.asm
-/MouseTest.asm
 /OS/
 /PacMan.asm
-/StackTest.asm
-/TestAsm.asm
 /TronGame.asm
-/TypingTest.asm
+/net/

@@ -758,6 +758,32 @@ public class APPLEDRCx64 extends Processor
 			
 			gen.addBytecode(Bytecode.invokevirtual, 0, getConstant(gen, "interrupt METHOD", ConstPoolEntry.CONSTANT_FieldMethodInterfaceMethodref, 10, getConstant(gen, "net/lotrek/dynarec/execute/Processor CLASS", ConstPoolEntry.CONSTANT_Class, getConstant(gen, "net/lotrek/dynarec/execute/Processor", ConstPoolEntry.CONSTANT_Utf8, "net/lotrek/dynarec/execute/Processor")), getConstant(gen, "interrupt NAMETYPE", ConstPoolEntry.CONSTANT_NameAndType, getConstant(gen, "interrupt", ConstPoolEntry.CONSTANT_Utf8, "interrupt"), getConstant(gen, "(I[J)V", ConstPoolEntry.CONSTANT_Utf8, "(I[J)V"))));
 			
+			gen.addBytecode(Bytecode.iconst_4);
+			gen.addBytecode(Bytecode.newarray, 11);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_0);
+			gen.addBytecode(Bytecode.lconst_1);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_1);
+			gen.addBytecode(Bytecode.lconst_0);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_2);
+			gen.addBytecode(Bytecode.lconst_1);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.dup);
+			gen.addBytecode(Bytecode.iconst_3);
+			gen.addBytecode(Bytecode.iconst_3);
+			gen.addBytecode(Bytecode.i2l);
+			gen.addBytecode(Bytecode.lastore);
+			
+			gen.addBytecode(Bytecode.areturn);
+			
 			return 0;
 		},
 	};
@@ -1480,7 +1506,7 @@ public class APPLEDRCx64 extends Processor
 		{
 			int inst = (int) Register.getTypeForBytes(Integer.class, data, off + length);
 
-			if((inst >> 20 & 0xff) == 22 || (inst >> 20 & 0xff) == 23 || (inst >> 20 & 0xff) == 24 || (inst >> 20 & 0xff) == 28) //Will stop when encountering jump
+			if((inst >> 20 & 0xff) == 22 || (inst >> 20 & 0xff) == 23 || (inst >> 20 & 0xff) == 24 || (inst >> 20 & 0xff) == 28 || (inst >> 20 & 0xff) == 30) //Will stop when encountering jump
 			{
 				length += (inst >> 20 & 0xff) == 23 ? 8 : 4;
 				break par;
