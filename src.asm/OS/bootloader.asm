@@ -1,44 +1,10 @@
-#mode defines
-  DynamicLinker
-  {
-    int memSize
-    int entPtr
-    int stackPtr
-  }
-
-  DeviceEntry
-	{
-		int deviceHash
-		int deviceAddress
-	 	byte occupationLength
-	}
-
-  DiskDevice
-  {
-    byte diskCt
-    int ringAddr
-    byte ringLength
-  }
-
-  DiskCommand
-  {
-    byte mode
-    byte diskId
-    long diskSector
-    int memAddress
-  }
-
+#mode imports
+  src.asm/stdlib.asmh
+  src.asm/OS/bios.asmh
 #mode data
   DynamicLinker lnk
 #mode text
-  #data
-#mode macro
-  AbsJump(@addr)
-  {
-  	SUB r0, @addr, r15
-  	SUB r0, r0, #12
-  	64: B r0, r0, r0, #0
-  }
+  #data  
 #mode data
   DiskCommand[4] com
   byte[2048] init

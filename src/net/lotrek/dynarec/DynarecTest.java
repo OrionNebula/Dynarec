@@ -78,6 +78,7 @@ public class DynarecTest
 			{
 				String asmFile = args.poll(), output = args.poll();
 				try {
+					System.out.printf("Began assembling \"%s\" to \"%s\"\n", new File(asmFile).getAbsolutePath(), new File(output).getAbsolutePath());
 					new AppleAdvAsm().assemble(new FileInputStream(new File(asmFile)), new FileOutputStream(new File(output)));
 				} catch (IOException e) {
 					e.printStackTrace();

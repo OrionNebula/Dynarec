@@ -1,0 +1,7 @@
+#mode defines
+  DynamicLinker
+  {
+    int memSize
+    int entPtr
+    int stackPtr
+  }

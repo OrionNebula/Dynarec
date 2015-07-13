@@ -1,14 +1,20 @@
 package net.lotrek.dynarec.execute;
 
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,6 +26,11 @@ public class AppleAdvAsm implements Assembler {
 	}
 
 	public void assemble(InputStream is, OutputStream os) throws IOException
+	{
+		assemble(is, os, false);
+	}
+	
+	private void assemble(InputStream is, OutputStream os, boolean imp) throws IOException
 	{
 		Scanner scr = new Scanner(is);
 		DataOutputStream dos = new DataOutputStream(os);
@@ -70,11 +81,17 @@ public class AppleAdvAsm implements Assembler {
 						break;
 					case "data":
 						i += generateData(i, lines, dos);
+						break;
 					case "text":
+						if(imp)
+							throw new RuntimeException("Header files cannot contain text sections");
 						i += generateText(i, lines, dos);
 						break;
 					case "macro":
 						i += generateMacros(i, lines, dos);
+						break;
+					case "imports":
+						i += generateImports(i, lines, dos);
 						break;
 					default:
 						scr.close();
@@ -91,7 +108,29 @@ public class AppleAdvAsm implements Assembler {
 		scr.close();
 	}
 	
+	private int generateImports(int ind, ArrayList<String> lines, DataOutputStream dos) throws IOException
+	{
+		int indO = ++ind;
+		
+		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
+		{
+			String importFile = lines.get(ind++).trim();
+			System.out.printf("Imported header file \"%s\"\n", new File(importFile).getAbsolutePath());
+			FileInputStream fis = new FileInputStream(new File(importFile));
+			assemble(fis, dos, true);
+			fis.close();
+			if(!dataPostfix.isEmpty())
+			{
+				System.out.printf("Header file failed to toss #mode data declarations - tossing automatically\n");
+				dataPostfix = "";
+			}
+		}
+		
+		return ind - indO;
+	}
+	
 	private HashMap<String, String> variables = new HashMap<>();
+	private HashMap<String, ObjectPair<Class<? extends Number>, Number>> varValues = new HashMap<>();
 	private String dataPostfix = "";
 	private int generateData(int ind, ArrayList<String> lines, DataOutputStream dos)
 	{
@@ -100,6 +139,11 @@ public class AppleAdvAsm implements Assembler {
 		while(ind < lines.size() && !lines.get(ind).startsWith("#mode"))
 		{
 			String structDef = lines.get(ind++).replaceAll(" =.*", "");
+			if(structDef.equals("#toss"))
+			{
+				dataPostfix = "";
+				continue;
+			}
 			System.out.printf("Defined variable %s with type %s\n", structDef.split(" ")[1], structDef.split(" ")[0]);
 			variables.put(structDef.split(" ")[1], structDef.split(" ")[0]);
 			dataPostfix += String.format(":V%sV:\n", structDef.split(" ")[1]);
@@ -109,31 +153,34 @@ public class AppleAdvAsm implements Assembler {
 			{
 				structDef = lines.get(ind - 1);
 				
+				ObjectPair<Class<? extends Number>, Number> eval = evaluateExpression(structDef.split("=")[1].trim(), varValues);
+				varValues.put(structDef.split(" ")[1], eval);
+				System.out.printf("Assigned variable \"%s\" value %s\n", structDef.split(" ")[1], eval.two.toString());
 				int intVal = 0;
 				long longVal = 0;
 				switch(structDef.split(" ")[0])
 				{
 				case "float":
-					 intVal = Float.floatToRawIntBits(Float.parseFloat(structDef.split("=")[1].trim()));
+					 intVal = Float.floatToRawIntBits(eval.two.floatValue());
 				case "int":
-					intVal = intVal == 0 ? Integer.parseInt(structDef.split("=")[1].trim()) : intVal;
+					intVal = intVal == 0 ? eval.two.intValue() : intVal;
 					for (int i = 3; i >= 0; i--)
 						dataPostfix += String.format("{%s}\n", Integer.toString((intVal >> 8*i) & 0xff));
 					break;
 				case "double":
-					 longVal = Double.doubleToRawLongBits(Double.parseDouble(structDef.split("=")[1].trim()));
+					 longVal = Double.doubleToRawLongBits(eval.two.doubleValue());
 				case "long":
-					longVal = longVal == 0 ? Long.parseLong(structDef.split("=")[1].trim()) : longVal;
+					longVal = longVal == 0 ? eval.two.longValue() : longVal;
 					for (int i = 7; i >= 0; i--)
 						dataPostfix += String.format("{%s}\n", Long.toString((longVal >> 8*i) & 0xff));
 					break;
 				case "short":
-					short shortVal = Short.parseShort(structDef.split("=")[1].trim());
+					short shortVal = eval.two.shortValue();
 					for (int i = 1; i >= 0; i--)
 						dataPostfix += String.format("{%s}\n", Integer.toString((shortVal >> 8*i) & 0xff));
 					break;
 				case "byte":
-					dataPostfix += String.format("{%s}\n", Integer.toString((Byte.parseByte(structDef.split("=")[1].trim())) & 0xff));
+					dataPostfix += String.format("{%s}\n", Integer.toString((eval.two.byteValue()) & 0xff));
 					break;
 				}
 			}
@@ -163,13 +210,14 @@ public class AppleAdvAsm implements Assembler {
 		return ind - indO;
 	}
 	
-	private HashMap<String, AsmStruct> defines = new HashMap<>();
-	{
+	private static HashMap<String, AsmStruct> defines = new HashMap<>();
+	static {
 		defines.put("L@int", new AsmStruct("L@int", new String[]{"int value"}));
 		defines.put("L@long", new AsmStruct("L@long", new String[]{"long value"}));
 		defines.put("L@byte", new AsmStruct("L@byte", new String[]{"byte value"}));
 		defines.put("L@double", new AsmStruct("L@double", new String[]{"double value"}));
 	}
+	
 	private int generateDefines(int ind, ArrayList<String> lines, DataOutputStream dos)
 	{
 		int indO = ++ind;
@@ -738,6 +786,138 @@ public class AppleAdvAsm implements Assembler {
 			return AsmStruct.typesToLengths.get(type);
 		
 		throw new RuntimeException(String.format("Assembly failed: \"%s\" does not represent a valid type", type));
+	}
+	
+	private static Map<Class<? extends Number>, Integer> typePrecidence = new HashMap<>();
+	static {
+		typePrecidence.put(Double.class, 0);
+		typePrecidence.put(Float.class, 1);
+		typePrecidence.put(Long.class, 2);
+		typePrecidence.put(Integer.class, 3);
+		typePrecidence.put(Short.class, 4);
+		typePrecidence.put(Byte.class, 5);
+		
+	}
+	
+	public static ObjectPair<Class<? extends Number>, Number> evaluateExpression(String expr, Map<String, ObjectPair<Class<? extends Number>, Number>> variables)
+	{
+		expr = expr.replaceAll("\\s", "");
+		if(variables != null)
+		for (String key : variables.keySet())
+			expr = expr.replace(key, variables.get(key).two.toString());
+		
+		List<ObjectPair<String, ObjectPair<Class<? extends Number>, Number>>> parenBlocks = new ArrayList<>();
+		
+		int parenDepth = 0, segStart = -1;
+		for (int i = 0; i < expr.length(); i++)
+		{
+			if(expr.charAt(i) == '(')
+				parenDepth++;
+			if(expr.charAt(i) == ')')
+				parenDepth--;
+			if(parenDepth == 1 && segStart == -1)
+				segStart = i;
+			
+			if(parenDepth == 0 && segStart > -1)
+			{
+				parenBlocks.add(new ObjectPair<String, AppleAdvAsm.ObjectPair<Class<? extends Number>,Number>>(expr.substring(segStart + 1, i), evaluateExpression(expr.substring(segStart + 1, i), variables)));
+				segStart = -1;
+			}
+		}
+		
+		for (ObjectPair<String, ObjectPair<Class<? extends Number>, Number>> objectPair : parenBlocks)
+			expr = expr.replace("("+objectPair.one+")", objectPair.two.two.toString());
+		
+		while(expr.contains("*") || expr.contains("/"))
+		{
+			int i = expr.contains("*") && expr.contains("/") ? (expr.indexOf("*") < expr.indexOf("/") ? expr.indexOf("*") : expr.indexOf("/")) : (expr.contains("*") ? expr.indexOf("*") : expr.indexOf("/")), j = i;
+			String left = "", right = "";
+			
+			i--;
+			while(i >= 0 && !"*/+-".contains(""+expr.charAt(i)))
+				left = expr.charAt(i--) + left;
+			
+			i = j + 1;
+			while(i < expr.length() && !"*/+-".contains(""+expr.charAt(i)))
+				right += expr.charAt(i++);
+			
+			ObjectPair<Class<? extends Number>, Number> lNum = parseNumber(left), rNum = parseNumber(right), eval = applyOperationWithPromotion(lNum, rNum, expr.charAt(j) == '*' ? (x,y) -> x*y : (x,y) -> x/y);
+
+			expr = expr.replace(left+expr.charAt(j)+right, eval.two.toString());
+		}
+		
+		while(expr.contains("+") || expr.contains("-"))
+		{
+			int i = expr.contains("+") && expr.contains("-") ? (expr.indexOf("+") < expr.indexOf("-") ? expr.indexOf("+") : expr.indexOf("-")) : (expr.contains("+") ? expr.indexOf("+") : expr.indexOf("-")), j = i;
+			String left = "", right = "";
+			
+			i--;
+			while(i >= 0 && !"*/+-".contains(""+expr.charAt(i)))
+				left = expr.charAt(i--) + left;
+			
+			i = j+1;
+			while(i < expr.length() && !"*/+-".contains(""+expr.charAt(i)))
+				right += expr.charAt(i++);
+			
+			ObjectPair<Class<? extends Number>, Number> lNum = parseNumber(left), rNum = parseNumber(right), eval = applyOperationWithPromotion(lNum, rNum, expr.charAt(j) == '+' ? (x,y) -> x+y : (x,y) -> x-y);
+
+			expr = expr.replace(left+expr.charAt(j)+right, eval.two.toString());
+		}
+		
+		return parseNumber(expr);
+	}
+	
+	public static ObjectPair<Class<? extends Number>, Number> parseNumber(String num)
+	{
+		if(num.contains("."))
+			return new ObjectPair<Class<? extends Number>, Number>(Double.class, Double.parseDouble(num));
+		long lNum = Long.parseLong(num);
+		if(lNum < Byte.MAX_VALUE && lNum > Byte.MIN_VALUE)
+			return new ObjectPair<Class<? extends Number>, Number>(Byte.class, Byte.parseByte(num));
+		if(lNum < Short.MAX_VALUE && lNum > Short.MIN_VALUE)
+			return new ObjectPair<Class<? extends Number>, Number>(Short.class, Short.parseShort(num));
+		if(lNum < Integer.MAX_VALUE && lNum > Integer.MIN_VALUE)
+			return new ObjectPair<Class<? extends Number>, Number>(Integer.class, Integer.parseInt(num));
+		return new ObjectPair<Class<? extends Number>, Number>(Long.class, Long.parseLong(num));
+	}
+	
+	public static ObjectPair<Class<? extends Number>, Number> applyOperationWithPromotion(ObjectPair<Class<? extends Number>, Number> one, ObjectPair<Class<? extends Number>, Number> two, BiFunction<Double, Double, Double> func)
+	{
+		Class<? extends Number> highestClass = typePrecidence.get(one.one) < typePrecidence.get(two.one) ? one.one : two.one;
+
+		try {
+			return new ObjectPair<Class<? extends Number>, Number>(highestClass, (Number)(Number.class.getMethod(((Class<?>)highestClass.getField("TYPE").get(null)).getSimpleName().toLowerCase() + "Value").invoke(func.apply(one.two.doubleValue(), two.two.doubleValue()))));
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+				| SecurityException | NoSuchFieldException e) {
+			return null;
+		}
+	}
+	
+	public static class ObjectPair<A, B>
+	{
+		private A one;
+		private B two;
+		
+		public ObjectPair(A one, B two)
+		{
+			this.one = one;
+			this.two = two;
+		}
+		
+		public A getOne()
+		{
+			return one;
+		}
+		
+		public B getTwo()
+		{
+			return two;
+		}
+
+		@Override
+		public String toString() {
+			return "ObjectPair [one=" + one + ", two=" + two + "]";
+		}
 	}
 	
 	private static class AsmMacro

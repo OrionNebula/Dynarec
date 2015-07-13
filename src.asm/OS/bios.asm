@@ -1,45 +1,6 @@
-#mode defines
-;Directory Device
-  DirectoryDevice
-  {
-     byte status
-     byte devCount
-     byte depStart
-     byte depLength
-     int depAddr
-  }
-
-  DeviceEntry
-	{
-		int deviceHash
-		int deviceAddress
-	 	byte occupationLength
-	}
-
-;Disk Device
-  DiskDevice
-  {
-    byte diskCt
-    int ringAddr
-    byte ringLength
-  }
-
-  DiskCommand
-  {
-    byte mode
-    byte diskId
-    long diskSector
-    int memAddress
-  }
-
-;Custom strutures
-  DynamicLinker
-  {
-    int memSize
-    int entPtr
-    int stackPtr
-  }
-
+#mode imports
+  src.asm/stdlib.asmh
+  src.asm/OS/bios.asmh
 #mode data
   DeviceEntry[7] ent
 
@@ -120,7 +81,5 @@
   toLoad* -> r2
 
 	;obtain a relative jump vector and jump to it
-	SUB r3, r2, r15
-	SUB r3, r3, #12
-	64: B r3, r0, r0, #0
+  AbsJump(r2)
 #data

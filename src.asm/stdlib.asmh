@@ -1,0 +1,121 @@
+#mode defines
+	DirectoryDevice
+	{
+		byte status
+	 	byte devCount
+	 	byte depStart
+	 	byte depLength
+	 	int depAddr
+	}
+
+	DeviceEntry
+	{
+		int deviceHash
+		int deviceAddress
+	 	byte occupationLength
+	}
+
+	VideoDevice
+	{
+		byte status
+		int width
+		int height
+		int instAddr
+	}
+
+	GraphicsCommand
+	{
+		byte mode
+		int data
+		byte x
+		byte y
+	}
+
+	GraphicsQuery
+	{
+		byte char
+		int color
+	}
+
+	InterruptDevice
+	{
+		byte status
+		byte command
+		int toMonitor
+		byte regionLength
+	}
+
+	KeyboardDevice
+	{
+		byte swap
+		byte busy
+		int bufferLen
+		int readLen
+		int addr
+	}
+
+	Keystroke
+	{
+		int key
+		byte char
+	}
+
+	MouseDevice
+	{
+		int x
+		int y
+		byte buttons
+	}
+
+	RTCDevice
+	{
+		byte id
+		byte command
+		int period
+	}
+
+	ACPIDevice
+  {
+    byte status
+    int cmdAddr
+    long launchTime
+    long currentTime
+  }
+
+  ACPICommand
+  {
+    byte mode
+    int data
+  }
+
+	DiskDevice
+  {
+    byte diskCt
+    int ringAddr
+    byte ringLength
+  }
+
+  DiskCommand
+  {
+    byte mode
+    byte diskId
+    long diskSector
+    int memAddress
+  }
+#mode macro
+	CallMethod(@MethodPointer)
+	{
+		stackPtr -> r1
+		ADD r1, r1, #sizeof(int)
+		stackPtr <- r1
+		ADD r1, r15, #24
+		stackPtr& <- r1
+		goto @MethodPointer
+	}
+
+	AbsJump(@addr)
+  {
+  	SUB r0, @addr, r15
+  	SUB r0, r0, #12
+  	64: B r0, r0, r0, #0
+  }

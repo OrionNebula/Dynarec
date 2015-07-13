@@ -1,0 +1,6 @@
+u4 - magic : 0xACCEDEFF
+u4 - call_stack_offset
+u1 - symbol_len
+u4[symbol_len] - symbol_offset
+u4 - code_len
+u1[code_len] - code

@@ -1,6 +1,81 @@
-#mode imports
-  src.asm/stdlib.asmh
 #mode defines
+	DirectoryDevice
+	{
+		byte status
+	 	byte devCount
+	 	byte depStart
+	 	byte depLength
+	 	int depAddr
+	}
+
+	DeviceEntry
+	{
+		int deviceHash
+		int deviceAddress
+	 	byte occupationLength
+	}
+
+	VideoDevice
+	{
+		byte status
+		int width
+		int height
+		int instAddr
+	}
+
+	GraphicsCommand
+	{
+		byte mode
+		int data
+		byte x
+		byte y
+	}
+
+	IntCtrl
+	{
+		byte status
+		byte command
+		int toMonitor
+		byte regionLength
+	}
+
+	KeyboardDevice
+	{
+		byte swap
+		byte busy
+		int bufferLen
+		int readLen
+		int addr
+	}
+
+	MouseDevice
+	{
+		int x
+		int y
+		byte buttons
+	}
+
+	RTCDevice
+	{
+		byte id
+		byte command
+		int period
+	}
+
+	ACPIDevice
+  {
+    byte status
+    int cmdAddr
+    long launchTime
+    long currentTime
+  }
+
+  ACPICommand
+  {
+    byte mode
+    int data
+  }
+
 	;Custom Structures
 	IVT
 	{
@@ -25,6 +100,29 @@
 		int mouseAddr
 		int rtcAddr
 		int acpiAddr
+	}
+
+	Keystroke
+	{
+		int key
+		byte char
+	}
+
+	GraphicsQuery
+	{
+		byte char
+		int color
+	}
+
+#mode macro
+	CallMethod(@MethodPointer)
+	{
+		stackPtr -> r1
+		ADD r1, r1, #sizeof(int)
+		stackPtr <- r1
+		ADD r1, r15, #24
+		stackPtr& <- r1
+		goto @MethodPointer
 	}
 #mode data
 	;cache device addresses
@@ -178,16 +276,16 @@
 :setupKeyboardInterrupt:
 	addr.intAddr -> r1
 	addr.keyAddr -> r2
-	InterruptDevice[r1].toMonitor <- r2
+	IntCtrl[r1].toMonitor <- r2
 	MOV r2, #0
-	InterruptDevice[r1].command <- r2
+	IntCtrl[r1].command <- r2
 	MOV r2, #1
-	InterruptDevice[r1].regionLength <- r2
-	InterruptDevice[r1].status <- r2
+	IntCtrl[r1].regionLength <- r2
+	IntCtrl[r1].status <- r2
 
 	MOV r3, #0
 	do
-		InterruptDevice[r1].status -> r2
+		IntCtrl[r1].status -> r2
 	while(r3 != r2)
 
 	goto :return:
@@ -277,16 +375,16 @@
 	player* -> r2
 	if(r2 = r1)
 		addr.intAddr -> r1
-		InterruptDevice[r1].toMonitor <- r2
+		IntCtrl[r1].toMonitor <- r2
 		MOV r2, #1
 		LSL r2, r2, #7
-		InterruptDevice[r1].command <- r2
+		IntCtrl[r1].command <- r2
 		MOV r2, #1
-		InterruptDevice[r1].status <- r2
+		IntCtrl[r1].status <- r2
 
 		MOV r3, #0
 		do
-			InterruptDevice[r1].status -> r2
+			IntCtrl[r1].status -> r2
 		while(r3 != r2)
 	end
 
@@ -329,16 +427,16 @@
 		MOV r2, #1
 		if(r1 != r2)
 			addr.intAddr -> r1
-			InterruptDevice[r1].toMonitor <- r2
+			IntCtrl[r1].toMonitor <- r2
 			MOV r2, #1
 			LSL r2, r2, #7
-			InterruptDevice[r1].command <- r2
+			IntCtrl[r1].command <- r2
 			MOV r2, #1
-			InterruptDevice[r1].status <- r2
+			IntCtrl[r1].status <- r2
 
 			MOV r3, #0
 			do
-				InterruptDevice[r1].status -> r2
+				IntCtrl[r1].status -> r2
 			while(r3 != r2)
 		end
 
