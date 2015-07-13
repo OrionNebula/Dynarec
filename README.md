@@ -72,7 +72,7 @@ A realtime dynamic recompiler in Java. Translates binary assembly code into Java
 The assembly language for the APPLEDRCx64 is more advanced than other forms of assembly. It allows direct opcode manipulation, but memory access is handled by pointers and structures, conditionals are handled with if blocks and comparison operators, and loops have a defined syntax.
 
 ##File Modes
-APPLEDRCx64 assembly files are divided into 3 modes: defines, data, and text, each invoked with "#mode [mode]". Each one expects different information to follow.
+APPLEDRCx64 assembly files are divided into 5 modes: defines, data, text, macro, and imports, each invoked with "#mode [mode]". Each one expects different information to follow.
 
 ###Defines
 The defines mode contains descriptors and names for data structures. Each structure can be composed of a series of named primitives or other structures. As an example, here is the control structure for the APPLEDRCx64 graphics controller:
@@ -99,6 +99,19 @@ DeviceEntry[16] ent
 ```
 This section consists of a single integer named `stackPtr`, a 16-type wide array of integers called `returnStack`, and a 16-type wide array of the custom structure `DeviceEntry` called `ent`. Information created in a data section will be placed at the next `#data` tag found within a text section. This tag must be explicitly placed.
 
+Placing an equals sign after a primitve type declaration followed by a valid value or expression for that type will assign it that value in the compiled binary. Declaration expressions are just like normal arithmetic expressions, supporting the plus, minus, division, and multiplication operators. Previously declared variables can be included in expressions simply by placing their name in it, just like variables in arithmetic expressions.
+
+The data section supports the `#toss` tag which will abandon any variables up to that point, keeping their calculated values but not including them in the compiled binary. Here's an example of expressions and the `#toss` tag:
+
+```
+int DISK_SECTOR_SIZE = 512
+int DISK_SECTOR_COUNT = 24
+#toss
+int diskSize = DISK_SECTOR_SIZE * DISK_SECTOR_COUNT
+```
+
+Only diskSize will appear and be usable in the final assembly.
+
 ###Text
 The text section contains the actual code for any assembly program. This section can contain raw opcode mnemonics or a series of language-specific constructs. This section is where the types and variables defined in the previous sections become useful. This code sample shows how easy it is to manipulate variables and structures in a text section:
 
@@ -124,6 +137,9 @@ WriteRegister(@Register, @Value)
 }
 ```
 When called in the code (`WriteRegister(r1, 45)`) the values passed into the macro replace each instance of the argument name in the macro and that altered text takes the place of the invocation and is processed again. Macros can contain any valid text mode structure, including other macro invocations.
+
+###Imports
+The imports section allows you to specify header files to include in the scope of that assembly file. This means you can consolidate structure definitions into dedecated files rather than having to re-specify them in a `#mode defines` section for each `.asm` file. Header files typically have the extension `.asmh` and can contain any section besides `#mode text`. Should a header file include a `#mode data` section, the variables declared there will be automatically `#toss`ed and made into expression constants.
 
 ##Control Structures
 APPLEDRCx64 assembly has 3 major control structures: goto, if, and do-while. These are made possible through the use of labels, small tags which anchor a point in the assembly. Referneces made to these tags in a number literal will be replaced with the distance from that instruction to the label. This is used to obtain absoulte pointers to relative objects like variables as well as perform accurate jumps. Here's a small code example which employs these structures.
