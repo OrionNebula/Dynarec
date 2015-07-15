@@ -87,7 +87,7 @@ VideoDevice
 }
 ```
 
-These structures play a critical role in managing systems and memory.
+These structures play a critical role in managing systems and memory. Each primitive type has a built in structure with one property, `value`, that allows you to access a primitive type at any address. Ints use `L@int`, longs `L@long`, and so on.
 
 ###Data
 The data mode is a series of raw variable names and types. These variables are given explicit space in the assembled binary and can be referenced within the code. Here is an example of a data section using various types of variables:
@@ -158,3 +158,46 @@ if(r1 = r2)
 end
 goto :test1:
 ```
+##Static Linking
+APPLEDRCx64 supports static linking as a second stage of compilation. Files are first assembled to the ACCessible Executable DEFinition Format, a format which tracks what variables are to be imported or exported by an assembly file. The `import` and `extern` keywords placed before a variable name allow it to be imported or exported, respectivley. Any variable type can be exported, but only `int` may be imported. This is because imported variables are expressed as pointers. Here's an example of how linking might be used:
+
+LinkableFile.asm
+```
+#mode imports
+	src.asm/stdlib.asmh
+#mode data
+	import int memSize
+	import int returnAddr
+	extern int goReturn
+	extern byte[0] go
+#mode text
+	#data
+	memSize -> r1
+	L@int[r1].value -> r1
+	goReturn <- r1
+	returnAddr -> r1
+	AbsJump(r1)
+```
+MasterFile.asm
+```
+#mode imports
+	arc.asm/stdlib.asmh
+#mode data
+	extern int memSize
+	extern int returnAddr
+	import int goReturn
+	import int go
+#mode text
+	memSize <- r1
+	ADD r1, r15, #:goReturn:
+	returnAddr <- r1
+	go -> r1
+	AbsJump(r1)
+:goReturn:
+	goReturn -> r1
+	L@int[r1] -> r1
+	;do something with r1
+	HLT
+	#data
+```
+MasterFile.asm, as the name implies, is used as the master file in this example. Once these two files are compiled and linked, the assembled content of MasterFile will be placed first. This is what will execute if the linked file was used as the bios.
