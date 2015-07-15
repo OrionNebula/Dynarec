@@ -955,7 +955,7 @@ public class APPLEDRCx64 extends Processor
 					}
 
 //					System.out.printf("%d : %d : %d | %s\n", ret[1], ret[3], ret[2], Arrays.toString(getRegisters()));
-					//System.out.println("Cache " + ret[0] + " : " + addr + " : " + sh[0]);
+//					System.out.println("Cache " + ret[0] + " : " + addr + " : " + sh[0]);
 					getRegisters()[PC] += ret[0];
 					
 					if(interruptQueue.size() > 0 && getRegisters()[ProcMode] == 0)

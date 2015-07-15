@@ -62,6 +62,7 @@ public class DiskDevice extends MemorySpaceDevice
 			
 			if(instance[2].getValue(Byte.class) > 0)
 			{
+				System.out.println("Command!");
 				Register[] com = cmdStruct.getInstance(instance[1].getValue(Integer.class) + cmdStruct.getLength() * ringIndex, this.getProcessor().getMemory());
 				RandomAccessFile raf = diskRAFs[com[1].getValue(Byte.class)];
 				File file = diskFiles[com[1].getValue(Byte.class)];

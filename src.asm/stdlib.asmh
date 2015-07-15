@@ -119,3 +119,13 @@
   	SUB r0, r0, #12
   	64: B r0, r0, r0, #0
   }
+
+	AbsCall(@addr)
+	{
+		stackPtr -> r1
+		ADD r1, r1, #sizeof(int)
+		stackPtr <- r1
+		ADD r1, r15, #32
+		stackPtr& <- r1
+		AbsJump(@addr)
+	}

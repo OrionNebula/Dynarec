@@ -1,5 +1,6 @@
 package net.lotrek.dynarec.execute;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,16 +25,19 @@ public class AppleAdvAsm implements Assembler {
 	{
 		return APPLEDRCx64.class;
 	}
-
-	public void assemble(InputStream is, OutputStream os) throws IOException
+	
+	@Override
+	public void assemble(InputStream is, OutputStream os, AssemblyType type) throws IOException
 	{
-		assemble(is, os, false);
+		assemble(is, os, false, type);
 	}
 	
-	private void assemble(InputStream is, OutputStream os, boolean imp) throws IOException
+	private ArrayList<ObjectPair<String, Integer>> exportedSymbols = new ArrayList<>(), importedSymbols = new ArrayList<>();
+	private void assemble(InputStream is, OutputStream os, boolean imp, AssemblyType type) throws IOException
 	{
 		Scanner scr = new Scanner(is);
-		DataOutputStream dos = new DataOutputStream(os);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(baos);
 
 		boolean inQuotes = false;
 		ArrayList<String> lines = new ArrayList<>();
@@ -77,21 +81,21 @@ public class AppleAdvAsm implements Assembler {
 				switch(lines.get(i).split(" ")[1])
 				{
 					case "defines":
-						i += generateDefines(i, lines, dos);
+						i += generateDefines(i, lines, dos, type);
 						break;
 					case "data":
-						i += generateData(i, lines, dos);
+						i += generateData(i, lines, dos, type);
 						break;
 					case "text":
 						if(imp)
 							throw new RuntimeException("Header files cannot contain text sections");
-						i += generateText(i, lines, dos);
+						i += generateText(i, lines, dos, type);
 						break;
 					case "macro":
-						i += generateMacros(i, lines, dos);
+						i += generateMacros(i, lines, dos, type);
 						break;
 					case "imports":
-						i += generateImports(i, lines, dos);
+						i += generateImports(i, lines, dos, type);
 						break;
 					default:
 						scr.close();
@@ -106,9 +110,33 @@ public class AppleAdvAsm implements Assembler {
 		}
 		
 		scr.close();
+		
+		if(type == AssemblyType.ACCEDEFF)
+		{
+			DataOutputStream rDos = new DataOutputStream(os);
+			rDos.writeInt(0xACCEDEFF);
+			rDos.writeByte(0);
+			rDos.writeByte(exportedSymbols.size());
+			for (ObjectPair<String, Integer> symbol : exportedSymbols)
+			{
+				rDos.writeByte(symbol.one.length());
+				rDos.write(symbol.one.getBytes());
+				rDos.writeInt(symbol.two);
+			}
+			rDos.writeByte(importedSymbols.size());
+			for (ObjectPair<String, Integer> symbol : importedSymbols)
+			{
+				rDos.writeByte(symbol.one.length());
+				rDos.write(symbol.one.getBytes());
+				rDos.writeInt(symbol.two);
+			}
+			rDos.writeInt(baos.size());
+		}
+		
+		os.write(baos.toByteArray());
 	}
 	
-	private int generateImports(int ind, ArrayList<String> lines, DataOutputStream dos) throws IOException
+	private int generateImports(int ind, ArrayList<String> lines, DataOutputStream dos, AssemblyType type) throws IOException
 	{
 		int indO = ++ind;
 		
@@ -117,7 +145,7 @@ public class AppleAdvAsm implements Assembler {
 			String importFile = lines.get(ind++).trim();
 			System.out.printf("Imported header file \"%s\"\n", new File(importFile).getAbsolutePath());
 			FileInputStream fis = new FileInputStream(new File(importFile));
-			assemble(fis, dos, true);
+			assemble(fis, dos, true, AssemblyType.FLAT_FILE);
 			fis.close();
 			if(!dataPostfix.isEmpty())
 			{
@@ -129,10 +157,10 @@ public class AppleAdvAsm implements Assembler {
 		return ind - indO;
 	}
 	
-	private HashMap<String, String> variables = new HashMap<>();
+	private HashMap<String, ObjectPair<String, Boolean>> variables = new HashMap<>();
 	private HashMap<String, ObjectPair<Class<? extends Number>, Number>> varValues = new HashMap<>();
 	private String dataPostfix = "";
-	private int generateData(int ind, ArrayList<String> lines, DataOutputStream dos)
+	private int generateData(int ind, ArrayList<String> lines, DataOutputStream dos, AssemblyType type)
 	{
 		int indO = ++ind;
 		
@@ -144,8 +172,23 @@ public class AppleAdvAsm implements Assembler {
 				dataPostfix = "";
 				continue;
 			}
+			boolean isImported = false;
+			if(structDef.startsWith("import int") && type == AssemblyType.ACCEDEFF)
+			{
+				System.out.printf("Expecting the import of symbol \"%s\"\n", structDef.split(" ")[2]);
+				importedSymbols.add(new ObjectPair<String, Integer>(structDef.split(" ")[2], -1));
+				structDef = structDef.replace("import ", "");
+				isImported = true;
+			}
+			if(structDef.startsWith("extern") && type == AssemblyType.ACCEDEFF)
+			{
+				System.out.printf("Exporting symbol \"%s\"\n", structDef.split(" ")[2]);
+				exportedSymbols.add(new ObjectPair<String, Integer>(structDef.split(" ")[2], -1));
+				structDef = structDef.replace("extern ", "");
+			}
+			
 			System.out.printf("Defined variable %s with type %s\n", structDef.split(" ")[1], structDef.split(" ")[0]);
-			variables.put(structDef.split(" ")[1], structDef.split(" ")[0]);
+			variables.put(structDef.split(" ")[1], new ObjectPair<String, Boolean>(structDef.split(" ")[0], isImported));
 			dataPostfix += String.format(":V%sV:\n", structDef.split(" ")[1]);
 			if(!lines.get(ind - 1).contains("="))
 				dataPostfix += String.format("[%d]\n", getTypeLength(structDef.split(" ")[0]));
@@ -191,7 +234,7 @@ public class AppleAdvAsm implements Assembler {
 	
 	private HashMap<String, AsmMacro> macros = new HashMap<>();
 	
-	private int generateMacros(int ind, ArrayList<String> lines, DataOutputStream dos)
+	private int generateMacros(int ind, ArrayList<String> lines, DataOutputStream dos, AssemblyType type)
 	{
 		int indO = ++ind;
 		
@@ -218,7 +261,7 @@ public class AppleAdvAsm implements Assembler {
 		defines.put("L@double", new AsmStruct("L@double", new String[]{"double value"}));
 	}
 	
-	private int generateDefines(int ind, ArrayList<String> lines, DataOutputStream dos)
+	private int generateDefines(int ind, ArrayList<String> lines, DataOutputStream dos, AssemblyType type)
 	{
 		int indO = ++ind;
 		
@@ -239,7 +282,7 @@ public class AppleAdvAsm implements Assembler {
 	
 	private int globOff = 0;
 	private HashMap<String, Integer> labels = new HashMap<>();
-	private int generateText(int ind, ArrayList<String> lines, DataOutputStream dos) throws IOException
+	private int generateText(int ind, ArrayList<String> lines, DataOutputStream dos, AssemblyType asmType) throws IOException
 	{
 		int indO = ++ind;
 		
@@ -437,6 +480,16 @@ public class AppleAdvAsm implements Assembler {
 			if(line.matches(":.*:"))
 			{
 				labels.put(line, off);
+				if(asmType == AssemblyType.ACCEDEFF && line.matches(":V.*V:"))
+				{
+					for (int i = 0; i < exportedSymbols.size(); i++)
+						if((":V"+exportedSymbols.get(i).one+"V:").equals(line))
+							exportedSymbols.set(i, new ObjectPair<String, Integer>(exportedSymbols.get(i).one, off));
+					for (int i = 0; i < importedSymbols.size(); i++)
+						if((":V"+importedSymbols.get(i).one+"V:").equals(line))
+							importedSymbols.set(i, new ObjectPair<String, Integer>(importedSymbols.get(i).one, off));
+				}
+				
 //				System.out.println("Added label \"" + line + "\" : " + labels);
 				continue;
 			}
@@ -547,8 +600,11 @@ public class AppleAdvAsm implements Assembler {
 		//variable
 		if(variables.containsKey(desc.split("<\\-")[0].trim().split("\\[|\\.")[0].replace("&", "")))
 		{
-			String name = desc.split("<\\-")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("&", ""));
+			String name = desc.split("<\\-")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("&", "")).one;
 			String toRender = " <- " + resReg;
+			
+			if(variables.get(name.replace("&", "")).two)
+				System.err.println("Warning: Setting imported variables does not have the expected effect; pointers may become corrupt");
 			
 			if(type.contains("["))
 			{
@@ -662,7 +718,7 @@ public class AppleAdvAsm implements Assembler {
 		//variable
 		if(variables.containsKey(desc.split("\\->")[0].trim().split("\\[|\\.")[0].replace("*", "").replace("&", "")))
 		{
-			String name = desc.split("\\->")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("*", "").replace("&", ""));
+			String name = desc.split("\\->")[0].trim().split("\\[|\\.")[0], type = variables.get(name.replace("*", "").replace("&", "")).one;
 			String toRender = " -> " + resReg;
 			
 			if(type.contains("[") && !name.contains("*"))
@@ -683,8 +739,13 @@ public class AppleAdvAsm implements Assembler {
 				{
 					name = name.replace("*", "");
 					addrReg = resReg;
-				}else if(isRef)
+				}else if(isRef && !variables.get(name.replace("*", "").replace("&", "")).two)
 					name = name.replace("&", "");
+				else if(!isRef && variables.get(name.replace("*", "").replace("&", "")).two)
+					return String.format("64: ADD r0, r15, #:V%sV:\nHBFR %s, r0, #0\nADD %s, %s, r0\n", name.toUpperCase(), resReg, resReg, resReg);
+				else if(isRef && variables.get(name.replace("*", "").replace("&", "")).two)
+					return String.format("64: ADD r0, r15, #:V%sV:\nHBFR %s, r0, #0\nADD %s, %s, r0\nHBFR %s, %s, #0\n", name.replace("&", "").toUpperCase(), resReg, resReg, resReg, resReg, resReg);
+				
 				
 				if(defines.containsKey(type) && !isPointer)
 					toRender = String.format("%s[r0].%s", type, desc.split("\\.")[1]) + toRender;

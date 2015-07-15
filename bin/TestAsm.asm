@@ -1,36 +1,6 @@
+#mode imports
+  src.asm/stdlib.asmh
 #mode defines
-;Directory Device
-  DirectoryDevice
-  {
-     byte status
-     byte devCount
-     byte depStart
-     byte depLength
-     int depAddr
-  }
-
-  DeviceEntry
-	{
-		int deviceHash
-		int deviceAddress
-	 	byte occupationLength
-	}
-
-;ACPI Device
-  ACPIDevice
-  {
-    byte status
-    int cmdAddr
-    long launchTime
-    long currentTime
-  }
-
-  ACPICommand
-  {
-    byte mode
-    int data
-  }
-
 ;Custom strutures
   DynamicLinker
   {
@@ -40,8 +10,6 @@
   }
 
 #mode data
-  int test = 17 + 18
-
   DeviceEntry[7] ent
 
   ACPICommand com

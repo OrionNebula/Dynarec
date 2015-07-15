@@ -35,7 +35,7 @@ public class DirectoryDevice extends MemorySpaceDevice
 		{
 			int depStart = (int) memInst[2].getValue(Byte.class), depLength = (int) memInst[3].getValue(Byte.class), depAddr = memInst[4].getValue(Integer.class);
 			
-			System.out.printf("DeviceQuery: %d, %d, %d \n", depStart, depLength, depAddr);
+//			System.out.printf("DeviceQuery: %d, %d, %d \n", depStart, depLength, depAddr);
 			
 			for(int i = 0; i < depLength; i++)
 			{

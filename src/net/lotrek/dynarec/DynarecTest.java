@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Queue;
@@ -22,6 +23,8 @@ import net.lotrek.dynarec.devices.RealTimeClockDevice;
 import net.lotrek.dynarec.devices.VideoDevice;
 import net.lotrek.dynarec.execute.APPLEDRCx64;
 import net.lotrek.dynarec.execute.APPLEDRCx64.InstructionWriter;
+import net.lotrek.dynarec.execute.Assembler.AssemblyType;
+import net.lotrek.dynarec.execute.Linker;
 import net.lotrek.dynarec.execute.AppleAdvAsm;
 import net.lotrek.dynarec.execute.Assembler;
 import net.lotrek.dynarec.execute.Processor;
@@ -74,12 +77,30 @@ public class DynarecTest
 			
 			switch(arg)
 			{
+			case "--link":
+			{
+				String outFile = args.poll(), mainFile = args.poll();
+				int linkLen = Integer.parseInt(args.poll());
+				InputStream[] fis = new InputStream[linkLen];
+				for (int i = 0; i < fis.length; i++)
+					try {
+						fis[i] = new FileInputStream(new File(args.poll()));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				try {
+					new Linker().link(new FileOutputStream(new File(outFile)), new FileInputStream(new File(mainFile)), fis);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				break;
+			}
 			case "--assemble":
 			{
-				String asmFile = args.poll(), output = args.poll();
+				String asmFile = args.poll(), output = args.poll(), type = args.poll();
 				try {
 					System.out.printf("Began assembling \"%s\" to \"%s\"\n", new File(asmFile).getAbsolutePath(), new File(output).getAbsolutePath());
-					new AppleAdvAsm().assemble(new FileInputStream(new File(asmFile)), new FileOutputStream(new File(output)));
+					new AppleAdvAsm().assemble(new FileInputStream(new File(asmFile)), new FileOutputStream(new File(output)), AssemblyType.valueOf(type));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -87,12 +108,12 @@ public class DynarecTest
 			}
 			case "--adv-assemble":
 			{
-				String clazz = args.poll(), asmFile = args.poll(), output = args.poll();
+				String clazz = args.poll(), asmFile = args.poll(), output = args.poll(), type = args.poll();
 				Object inst;
 				try {
 					inst = Class.forName(clazz).newInstance();
 					System.out.println(inst instanceof Assembler ? "Attemping advanced assembly with \"" + inst.getClass().getName() + "\"" : "\"" + inst.getClass().getName() + "\" is not a valid Assembler; defaulting to AppleAdvAsm");
-					((Assembler)(inst instanceof Assembler ? inst : new AppleAdvAsm())).assemble(new FileInputStream(new File(asmFile)), new FileOutputStream(new File(output)));
+					((Assembler)(inst instanceof Assembler ? inst : new AppleAdvAsm())).assemble(new FileInputStream(new File(asmFile)), new FileOutputStream(new File(output)), AssemblyType.valueOf(type));
 				} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | IOException e1) {
 					e1.printStackTrace();
 				}
