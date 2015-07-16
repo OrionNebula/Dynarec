@@ -184,20 +184,18 @@ MasterFile.asm
 	arc.asm/stdlib.asmh
 #mode data
 	extern int memSize
-	extern int returnAddr
 	import int goReturn
 	import int go
+	extern byte[0] returnAddr
 #mode text
 	memSize <- r1
-	ADD r1, r15, #:goReturn:
-	returnAddr <- r1
 	go -> r1
 	AbsJump(r1)
-:goReturn:
+	
+	#data
 	goReturn -> r1
 	L@int[r1] -> r1
 	;do something with r1
 	HLT
-	#data
 ```
 MasterFile.asm, as the name implies, is used as the master file in this example. Once these two files are compiled and linked, the assembled content of MasterFile will be placed first. This is what will execute if the linked file was used as the bios.
