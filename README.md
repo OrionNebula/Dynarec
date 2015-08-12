@@ -119,11 +119,11 @@ Store the address of 'stackPtr' into register 1
 
 `stackPtr* -> r1`
 
-Store the value of register 1 into the property 'status'of a VideoDevice structure beginning at the address described by register 1
+Store the value of register 1 into the property 'status' of a VideoDevice structure beginning at the address described by register 1
 
 `VideoDevice[r1].status <- r1`
 
-Store the number 12 into register 1. Store the value of register one into the adress described by the value of "stackPtr"
+Store the number 12 into register 1. Store the value of register one into the address described by the value of "stackPtr"
 ```
 MOV r1, #12
 stackPtr& <- r1
