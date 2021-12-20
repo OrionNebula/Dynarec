@@ -1,176 +1,272 @@
+
+[32 Bit]: docs/32.md
+[64 Bit]: docs/64.md
+
+
 # Dynarec
-A realtime dynamic recompiler in Java. Translates binary assembly code into Java bytecode which is loaded and executed as needed. Includes a custom instruction set and assembly language with inspiration from C and ARM processors. The default processor is the APPLEDRCx64, which this documentation describes.
 
-## Instruction Set
-###32 bit instructions
-- MOV Rres, #/Rval
- - Stores the value represented by *val* into the register *Rres*
-- ADD Rres, Rarg1, #/Rval
- - Adds *Rarg1* and the value at *val* and stores the result into register *Rres*
-- SUB Rres, Rarg1, #/Rval
- - Subtracts the value at *val* from register *Rarg1* and stores the result into register *Rres*
-- MUL Rres, Rarg1, #/Rval
- - Multiples *Rarg1* by the value represented by *val* and stores the result into register *Rres*
-- DIV Rres, Rarg1, #/Rval
- -  Divides *Rarg1* by the value represented by *val* and stores the result into register *Rres*
-- ASR Rres, Rarg1, #/Rval
- - Arithmetically shifts *Rarg1* *val* bits to the right, storing the result in register *Rres*
-- LSL Rres, Rarg1, #/Rval
- - Logically shifts *Rarg1* *val* bits to the left, storing the result in register *Rres*
-- LSR Rres, Rarg1, #/Rval
- - Logically shifts *Rarg1* *val* bits to the right, storing the result in register *Rres*
-- IFD Rarg
- - Integer From Double, truncates the decimal and keeps the integer part
-- DFI Rarg
- - Double From Integer, converts an integer into a double of equivalent value
-- RTR Rarg, Raddr, #/Roff
- - Register To Ram, stores long value *Rarg* to address *Raddr* + *off*
-- RFR Rres, Raddr, #/Roff
- - Register From Ram, loads long value from adress *Raddr* + *off* into register *Rres*
-- BTR Rarg, Raddr, #/Roff
- - Byte To Ram, stores the least significant byte of *Rarg* to address *Raddr* + *off*
-- BFR Rres, Raddr, #/Roff
- - Byte From Ram, loads byte value from adress *Raddr* + *off* into register *Rres*
-- HBTR Rarg, Raddr, #/Roff
- - High Bytes To Ram, stores the most significant 4 bytes of *Rarg* to address *Raddr* + *off*
-- LBTR Rarg, Raddr, #/Roff
- - Low Bytes To Ram, stores the least significant 4 bytes of *Rarg* to address *Raddr* + *off*
-- HBFR Rres, Raddr, #/Roff
- - Half Bytes From Ram, loads 4 bytes from address *Raddr* + *off* into register *Rres*
-- HLT
- - Halts the processor, only recoverable by interrupt
-- AND Rres, Rarg1, #/Rval
- - Performs a bitwise and on *Rarg1* and the value at *val* and stores the result into register
-- ORR Rres, Rarg1, #/Rval
- - Performs a bitwise or on *Rarg1* and the value at *val* and stores the result into register
-- XOR Rres, Rarg1, #/Rval
- - Performs a bitwise exclusive or on *Rarg1* and the value at *val* and stores the result into register
-- RET
- - Returns the processor from an interrupted state
-- SVC #int
- - Triggers interrupt *int*
+A realtime dynamic recompiler in Java.
 
-###64 bit instructions
-- 64: MOV Rres, #/Rarg
- - Stores 32-bit value *arg* into register *res*, intended for literals
-- 64: DMOV Rres, #/Rarg
- - Stores floating-point value *arg* into register *res*
-- 64: DADD Rres, Rarg1, #/Rarg2
- - Adds *Rarg1* and *arg2* and stores the result in register *Rres*; Done as floating point types
-- 64: DSUB Rres, Rarg1, #/Rarg2
- - Subtracts *arg2* from *Rarg1* and stores the result in register *Rres*; Done as floating point types
-- 64: DMUL Rres, Rarg1, #/Rarg2
- - Multiplies *Rarg1* by *arg2* and stores the result in register *Rres*; Done as floating point types
-- 64: DDIV Rres, Rarg1, #/Rarg2
- - Divides *Rarg1* by *arg2* and stores the result in register *Rres*; Done as floating point types
-- 64: B #/Roff, Rcmp1, Rcmp2, #cmpType
- - Executes a jump to an adress *off* bytes away, assuming *Rcmp1* and *Rcmp2* pass the condition described by *cmpType*
-- 64: DLN Rres, #/Rarg
- - Takes the natural log of *arg* and stores the result into *Rres*
+Translates binary assembly into Java bytecode<br>
+which is loaded and executed as needed.
 
-#Assembly Language
-The assembly language for the APPLEDRCx64 is more advanced than other forms of assembly. It allows direct opcode manipulation, but memory access is handled by pointers and structures, conditionals are handled with if blocks and comparison operators, and loops have a defined syntax.
+Includes a `Custom Instruction Set` and<br>
+`Assembly Language` with inspiration from<br>
+**C** and **ARM** processors.
 
-##File Modes
-APPLEDRCx64 assembly files are divided into 5 modes: defines, data, text, macro, and imports, each invoked with "#mode [mode]". Each one expects different information to follow.
+The default processor is the `APPLEDRCx64`,<br>
+which this documentation describes.
 
-###Defines
-The defines mode contains descriptors and names for data structures. Each structure can be composed of a series of named primitives or other structures. As an example, here is the control structure for the APPLEDRCx64 graphics controller:
+---
+
+**Instruction Sets: ⸢ [32 Bit] ⸥ ⸢ [64 Bit] ⸥**
+
+---
+
+## Assembly
+
+The assembly language used for the `APPLEDRCx64`<br>
+is more advanced than other forms of assembly.
+
+**The language**<br>
+➜ allows for direct opcode manipulation.<br>
+➜ handles memory access for pointers / structures.<br>
+➜ handles conditionals with if blocks and comparison operators.<br>
+➜ uses a defined syntax for loops.
+
+---
+
+## Sections
+
+`APPLEDRCx64` assembly files are divided into 5 sections.
+
+A section can be declared with `#mode [mode]`
+
+#### Defines
+
+In this section descriptors and names for data structures are declared.
+
+Structures play a critical role in managing systems and memory.
+
+Each structure can be composed of multiple primitives and other structures.
+
+
+
+**Example of the Graphics Controller**
 
 ```
+#mode defines
+
 VideoDevice
 {
-	byte status
-	int width
-	int height
-	int instAddr
+    byte status
+    int width
+    int height
+    int instAddr
 }
 ```
 
-These structures play a critical role in managing systems and memory. Each primitive type has a built in structure with one property, `value`, that allows you to access a primitive type at any address. Ints use `L@int`, longs `L@long`, and so on.
+*Primitive types are builtin structures with a singular*<br>
+*property, `value`, that allows accessing it from any address.*
 
-###Data
-The data mode is a series of raw variable names and types. These variables are given explicit space in the assembled binary and can be referenced within the code. Here is an example of a data section using various types of variables:
+*Int uses `L@int`, long uses `L@long`,..*
+
+#### Data
+
+The data section consists of raw variable names and types<br>
+which are given explicit space in the assembled binary and<br>
+can be referenced within the code.
+
+Variables declared in the data section will be placed at the next<br>
+`#data` tag in the `text` section, which must be explicitly placed.
+
 
 ```
-int stackPtr
+#mode data
+
+int stackPointer
 int[16] returnStack
-DeviceEntry[16] ent
+DeviceEntry[16] entry
 ```
-This section consists of a single integer named `stackPtr`, a 16-type wide array of integers called `returnStack`, and a 16-type wide array of the custom structure `DeviceEntry` called `ent`. Information created in a data section will be placed at the next `#data` tag found within a text section. This tag must be explicitly placed.
 
-Placing an equals sign after a primitve type declaration followed by a valid value or expression for that type will assign it that value in the compiled binary. Declaration expressions are just like normal arithmetic expressions, supporting the plus, minus, division, and multiplication operators. Previously declared variables can be included in expressions simply by placing their name in it, just like variables in arithmetic expressions.
-
-The data section supports the `#toss` tag which will abandon any variables up to that point, keeping their calculated values but not including them in the compiled binary. Here's an example of expressions and the `#toss` tag:
+These declarations can also be assigned with expressions containing<br>
+**Arithmetic Operations** and previously declared variables.
 
 ```
-int DISK_SECTOR_SIZE = 512
-int DISK_SECTOR_COUNT = 24
+int a = 20
+int b = 4 * a
+```
+
+The data section also supports the `#toss` tag which will exclude any<br>
+previous variable declarations from being included in the compiled binary.
+
+Declarations before the tag effectively behave like compile time calculations.
+
+```
+int sector_count = 24
+int sector_size = 512
+
 #toss
-int diskSize = DISK_SECTOR_SIZE * DISK_SECTOR_COUNT
+
+int diskSize = sector_count * sector_size
 ```
 
-Only diskSize will appear and be usable in the final assembly.
+The assembled code will effectively contain:
 
-###Text
-The text section contains the actual code for any assembly program. This section can contain raw opcode mnemonics or a series of language-specific constructs. This section is where the types and variables defined in the previous sections become useful. This code sample shows how easy it is to manipulate variables and structures in a text section:
+```
+int diskSize = 12288
+```
 
-Store the address of 'stackPtr' into register 1
+#### Text
 
-`stackPtr* -> r1`
+This section contains the main code like raw opcodes<br>
+mnemonics as well as language specific constructs.
 
-Store the value of register 1 into the property 'status' of a VideoDevice structure beginning at the address described by register 1
+**Examples**
+
+Storing the address of `aVariable` into register 1
+
+`aVariable * -> r1`
+
+<br>
+
+Storing the value of register 1 into the property<br>
+`status` of a `VideoDevice` structure beginning<br>
+at the address described by register 1.
 
 `VideoDevice[r1].status <- r1`
 
-Store the number 12 into register 1. Store the value of register one into the address described by the value of "stackPtr"
+<br>
+
+Storing the number `12` into register 1.
+
 ```
-MOV r1, #12
-stackPtr& <- r1
+MOV r1 , #12
 ```
-###Macro
-Macros are code blocks that replace every instance of their invocation with their contents. Here's an example of a macro section entry:
+
+<br>
+
+Storing the value of register 1 one into the<br>
+address described by the value of `aVariable`.
+
 ```
-WriteRegister(@Register, @Value)
+aVariable & <- r1
+```
+
+#### Macro
+
+Macros are code block templates that have any of their<br>
+invocations replaced with the literal content of it's block.
+
+**Declaration**
+
+```
+#mode macro
+
+WriteRegister(@Register,@Value)
 {
-	MOV @Register, #@Value
+	MOV @Register , #@Value
 }
 ```
-When called in the code (`WriteRegister(r1, 45)`) the values passed into the macro replace each instance of the argument name in the macro and that altered text takes the place of the invocation and is processed again. Macros can contain any valid text mode structure, including other macro invocations.
 
-###Imports
-The imports section allows you to specify header files to include in the scope of that assembly file. This means you can consolidate structure definitions into dedecated files rather than having to re-specify them in a `#mode defines` section for each `.asm` file. Header files typically have the extension `.asmh` and can contain any section besides `#mode text`. Should a header file include a `#mode data` section, the variables declared there will be automatically `#toss`ed and made into expression constants.
-
-##Control Structures
-APPLEDRCx64 assembly has 3 major control structures: goto, if, and do-while. These are made possible through the use of labels, small tags which anchor a point in the assembly. Referneces made to these tags in a number literal will be replaced with the distance from that instruction to the label. This is used to obtain absoulte pointers to relative objects like variables as well as perform accurate jumps. Here's a small code example which employs these structures.
+**Usage**
 
 ```
-MOV r2, #5
-MOV r1, #0
+WriteRegister(r1,45)
+```
+
+**Precompiled Code**
+
+```
+MOV r1 , #45
+```
+
+*Macros can contain any valid text mode*<br>
+*structure as well as other macro calls.*
+
+#### Imports
+
+The import section allows for the specification of header<br>
+files that will be included in the scope of the current file.
+
+This can be used to bundle structure definitions into<br>
+dedicated files, often labeled with the `.asmh` file extension.
+
+These header files can contain any section type, except for `text`.
+
+A headers `data` section is automatically prepared<br>
+with `#toss` and thus only used at compile-time.
+
+---
+
+## Control Structures
+
+`APPLEDRCx64` assembly provides 3 major<br>
+control structures, `goto`, `if` and `do-while`.
+
+These can be used with the help of **Labels**,<br>
+tags which anchor a point in the assembly.
+
+
+```
+MOV r2 , #5
+MOV r1 , #0
+
 do
-    SUB r2, r2, #1
+    SUB r2 , r2 , #1
 while(r1 != r2)
-if(r1 = r2) goto :test1:
-HLT
-:test1:
-if(r1 = r2)
-    SUB r1, r1, #1
-end
-goto :test1:
-```
-##Static Linking
-APPLEDRCx64 supports static linking as a second stage of compilation. Files are first assembled to the ACCessible Executable DEFinition Format, a format which tracks what variables are to be imported or exported by an assembly file. The `import` and `extern` keywords placed before a variable name allow it to be imported or exported, respectivley. Any variable type can be exported, but only `int` may be imported. This is because imported variables are expressed as pointers. Here's an example of how linking might be used:
 
-LinkableFile.asm
+if(r1 = r2) goto :TestLabel:
+
+HLT
+
+:TestLabel:
+
+if(r1 = r2)
+    SUB r1 , r1 , #1
+end
+
+goto :TestLabel:
+```
+
+*References made to these tags in number literals will be*<br>
+*replaced with the distance from that instruction to the label.*
+
+*This is used to obtain absolute pointers tot relative objects*<br>
+*like variables as well as to perform accurate jumps.*
+
+---
+
+## Static Linking
+
+As a second stage of compilation, `APPLEDRCx64` allows for static linking.
+
+First files are assembled to the `ACCessible Executable DEFinition`<br>
+format which tracks **Imports / Exports** of variables declared with the<br>
+`import` & `extern` keywords.
+
+**Any** variable type can be **exported**.<br>
+
+Only `int` may be **imported** as imported<br>
+variables are expressed by pointers.
+
+
+**LinkableFile.asm**
+
 ```
 #mode imports
+
 	src.asm/stdlib.asmh
+
 #mode data
+
 	import int memSize
 	import int returnAddr
 	extern int goReturn
 	extern byte[0] go
+
 #mode text
+
 	#data
 	memSize -> r1
 	L@int[r1].value -> r1
@@ -178,24 +274,35 @@ LinkableFile.asm
 	returnAddr -> r1
 	AbsJump(r1)
 ```
-MasterFile.asm
+
+**MasterFile.asm**
+
 ```
 #mode imports
-	arc.asm/stdlib.asmh
+
+	src.asm/stdlib.asmh
+
 #mode data
+
 	extern int memSize
 	import int goReturn
 	import int go
 	extern byte[0] returnAddr
+
 #mode text
+
 	memSize <- r1
 	go -> r1
 	AbsJump(r1)
-	
+
 	#data
 	goReturn -> r1
 	L@int[r1] -> r1
 	;do something with r1
 	HLT
 ```
-MasterFile.asm, as the name implies, is used as the master file in this example. Once these two files are compiled and linked, the assembled content of MasterFile will be placed first. This is what will execute if the linked file was used as the bios.
+
+In this example `MasterFile.asm` is the main file.
+
+Once both files are compiled and linked, the assembled<br>
+content of `MasterFile` will be placed / executed first.
